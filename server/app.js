@@ -1,9 +1,9 @@
 const express = require('express');
 
-const config = require('./config');
-const router = require('./router');
+const config = require('./config/config');
+const router = require('./config/router');
 
-require('./db');
+require('./config/db');
 
 const app = express();
 

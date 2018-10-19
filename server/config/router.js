@@ -1,6 +1,6 @@
 const router = require('express').Router();
 
-const divisions = require('./controllers/divisions');
+const divisions = require('../controllers/divisions');
 
 router.use('/divisions', divisions);
 
