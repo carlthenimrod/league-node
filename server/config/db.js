@@ -1,6 +1,6 @@
 const db = require('mongoose');
 
-db.connect(process.env.DB_HOST, { 
+db.connect(process.env.MONGODB_URI, { 
   useFindAndModify: false,
   useNewUrlParser: true
 });
