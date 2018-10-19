@@ -1,25 +1,26 @@
 const router = require('express').Router();
 const {ObjectID} = require('mongodb');
 
-const {Division} = require('../models/division');
+const {Team} = require('../models/team');
 
 router.get('/', async (req, res) => {
   try {
-    const divisions = await Division.find();
-    res.send(divisions);
+    const teams = await Team.find().populate('division');
+    res.send(teams);
   } catch (e) {
     res.status(400).send(e);
   }
 });
 
 router.post('/', async (req, res) => {
-  const division = new Division({
-    name: req.body.name
+  const team = new Team({
+    name: req.body.name,
+    division: req.body.division
   });
 
   try {
-    await division.save();
-    res.send(division);
+    await team.save();
+    res.send(team);
   } catch (e) {
     res.status(400).send(e);
   }
@@ -33,13 +34,14 @@ router.put('/:id', async (req, res) => {
   }
 
   try {
-    const {name} = req.body;
-    const division = await Division.findByIdAndUpdate(id, {
-      name
+    const {name, division} = req.body;
+    const team = await Team.findByIdAndUpdate(id, {
+      name,
+      division
     }, {
       new: true
     });
-    res.send(division);
+    res.send(team);
   } catch (e) {
     res.status(400).send(e);
   }
@@ -53,7 +55,7 @@ router.delete('/:id', async (req, res) => {
   }
 
   try {
-    await Division.findById(id).deleteMany();
+    await Team.findById(id).deleteMany();
     res.send();
   } catch (e) {
     res.status(400).send(e);
