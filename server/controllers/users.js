@@ -1,5 +1,6 @@
 const router = require('express').Router();
 
+const {auth} = require('../middleware/auth');
 const {User} = require('../models/user');
 
 router.get('/', async (req, res) => {
@@ -26,13 +27,20 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.get('/me', auth, (req, res) => {
+  res.send(req.user);
+});
+
 router.post('/login', async (req, res) => {
   try {
-    const user = await User.findByCredentials(
-      req.body.email, 
-      req.body.password
-    );
-    res.send(user);
+    const user = await User.findByCredentials(req.body.email, req.body.password);
+    const tokens = await user.generateTokens();
+
+    res.send({
+      _id: user._id,
+      email: user.email,
+      ...tokens
+    });
   } catch (e) {
     switch (e.message) {
       case 'User not found.':
@@ -44,6 +52,24 @@ router.post('/login', async (req, res) => {
       default:
         res.status(400).send(e);
     }
+  }
+});
+
+router.post('/refresh', async (req, res) => {
+  try {
+    const access_token = await User.refreshToken(req.body.client, req.body.refresh_token);
+    res.send({access_token});
+  } catch (e) {
+    res.status(401).send();
+  }
+});
+
+router.delete('/logout', async (req, res) => {
+  try {
+    await User.removeToken(req.body.client, req.body.refresh_token);
+    res.send();
+  } catch (e) {
+    res.status(400).send();
   }
 });
 

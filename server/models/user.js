@@ -1,7 +1,10 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const uniqueValidator = require('mongoose-unique-validator');
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+
+const config = require('../config/config');
 
 const UserSchema = new mongoose.Schema({
   name: {
@@ -24,7 +27,13 @@ const UserSchema = new mongoose.Schema({
     minlength: 6,
     required: true,
     trim: true
-  }
+  },
+  tokens: [{
+    token: String
+  }],
+  roles: [{ 
+    type: String 
+  }]
 });
 
 UserSchema.pre('save', function (next) {
@@ -48,6 +57,64 @@ UserSchema.statics.findByCredentials = async function (email, password) {
   } else {
     throw new Error('Password incorrect.');
   }
+};
+
+UserSchema.statics.refreshToken = async function (client, refresh_token) {
+  const decoded = jwt.verify(refresh_token, config.refreshToken.secret);
+  if (decoded.client !== client) throw new Error();
+
+  const user = await this.findOne({
+    'tokens._id': client, 
+    'tokens.token': refresh_token
+  });
+  if (!user) throw new Error();
+
+  const access_token = jwt.sign({
+    _id: this._id,
+    email: this.email,
+    roles: this.roles
+  }, config.accessToken.secret, {
+    expiresIn: config.accessToken.expiresIn
+  });
+
+  return access_token;
+};
+
+UserSchema.statics.removeToken = async function (client, refresh_token) {
+  const user = await this.findOne({
+    'tokens._id': client,
+    'tokens.token': refresh_token
+  });
+
+  if (!user) return;
+
+  user.tokens.id(client).remove();
+  await user.save();
+};
+
+UserSchema.methods.generateTokens = async function () {
+  const access_token = jwt.sign({
+    _id: this._id,
+    email: this.email,
+    roles: this.roles
+  }, config.accessToken.secret, {
+    expiresIn: config.accessToken.expiresIn
+  });
+
+  const client = new mongoose.mongo.ObjectId();
+
+  const refresh_token = jwt.sign({client}, config.refreshToken.secret, {
+    expiresIn: config.refreshToken.expiresIn
+  });
+
+  this.tokens.push({
+    _id: client, 
+    token: refresh_token
+  });
+
+  await this.save();
+
+  return {access_token, refresh_token, client};
 };
 
 UserSchema.plugin(uniqueValidator);
