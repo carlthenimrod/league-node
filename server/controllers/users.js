@@ -26,4 +26,25 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.post('/login', async (req, res) => {
+  try {
+    const user = await User.findByCredentials(
+      req.body.email, 
+      req.body.password
+    );
+    res.send(user);
+  } catch (e) {
+    switch (e.message) {
+      case 'User not found.':
+        res.status(404).send();
+        break;
+      case 'Password incorrect.':
+        res.status(401).send();
+        break;
+      default:
+        res.status(400).send(e);
+    }
+  }
+});
+
 module.exports = router;

@@ -38,6 +38,18 @@ UserSchema.pre('save', function (next) {
   }
 });
 
+UserSchema.statics.findByCredentials = async function (email, password) {
+  const user = await this.findOne({email});
+  if (!user) throw new Error('User not found.');
+
+  const match = await bcrypt.compare(password, user.password);
+  if (match) {
+    return user;
+  } else {
+    throw new Error('Password incorrect.');
+  }
+};
+
 UserSchema.plugin(uniqueValidator);
 
 const User = mongoose.model('User', UserSchema);
