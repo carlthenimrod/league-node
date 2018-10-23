@@ -1,10 +1,26 @@
 const router = require('express').Router();
+const {ObjectID} = require('mongodb');
 
 const {League} = require('../models/league');
 
 router.get('/', async (req, res) => {
   try {
     const leagues = await League.find();
+    res.send(leagues);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
+router.get('/:id', async (req, res) => {
+  const id = req.params.id;
+  
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send();
+  }
+
+  try {
+    const leagues = await League.findById(id);
     res.send(leagues);
   } catch (e) {
     res.status(400).send(e);
@@ -21,6 +37,27 @@ router.post('/', async (req, res) => {
 
   try {
     await league.save();
+    res.send(league);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
+router.put('/:id', async (req, res) => {
+  const id = req.params.id;
+  
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send();
+  }
+
+  try {
+    const {name, description} = req.body;
+    const league = await League.findByIdAndUpdate(id, {
+      name,
+      description
+    }, {
+      new: true
+    });
     res.send(league);
   } catch (e) {
     res.status(400).send(e);
