@@ -13,7 +13,7 @@ const leagueSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  division: [Division.schema],
+  divisions: [Division.schema],
   teams: [Team.schema],
   start: Date,
   end: Date
