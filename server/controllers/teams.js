@@ -55,7 +55,7 @@ router.delete('/:id', async (req, res) => {
   }
 
   try {
-    await Team.findById(id).deleteMany();
+    await Team.findByIdAndDelete(id);
     res.send();
   } catch (e) {
     res.status(400).send(e);
