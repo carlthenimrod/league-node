@@ -133,4 +133,24 @@ router.put('/:id/divisions/:divisionId', async (req, res) => {
   }
 });
 
+router.delete('/:id/divisions/:divisionId', async (req, res) => {
+  const id = req.params.id;
+  const divisionId = req.params.divisionId;
+  
+  if (!ObjectID.isValid(id) || !ObjectID.isValid(divisionId)) {
+    return res.status(404).send();
+  }
+
+  try {
+    const league = await League.findById(id);
+    league.divisions.id(divisionId).remove();
+
+    await league.save();
+
+    res.send();
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
 module.exports = router;
