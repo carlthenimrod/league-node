@@ -87,14 +87,43 @@ router.post('/:id/divisions', async (req, res) => {
     res.status(404).send();
   }
 
+  if (req.body.parent && !ObjectID.isValid(req.body.parent)) {
+    res.status(404).send();
+  }
+
   try {
     const league = await League.findById(id);
     if (!league) res.status(404).send();
 
     const division = new Division({
-      name: req.body.name
+      name: req.body.name,
+      parent: req.body.parent
     });
     league.divisions.push(division);
+
+    await league.save();
+
+    res.send(division);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
+router.put('/:id/divisions/:divisionId', async (req, res) => {
+  const id = req.params.id;
+  const divisionId = req.params.divisionId;
+  
+  if (!ObjectID.isValid(id) || !ObjectID.isValid(divisionId)) {
+    return res.status(404).send();
+  }
+
+  try {
+    const league = await League.findById(id);
+    const division = league.divisions.id(divisionId);
+    
+    const {name, parent} = req.body;
+    division.name = name;
+    division.parent = parent;
 
     await league.save();
 
