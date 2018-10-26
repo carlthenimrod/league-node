@@ -2,6 +2,7 @@ const router = require('express').Router();
 const {ObjectID} = require('mongodb');
 
 const {League} = require('../models/league');
+const {Division} = require('../models/division');
 
 router.get('/', async (req, res) => {
   try {
@@ -74,6 +75,30 @@ router.delete('/:id', async (req, res) => {
   try {
     await League.findByIdAndDelete(id);
     res.send();
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
+router.post('/:id/divisions', async (req, res) => {
+  const id = req.params.id;
+
+  if (!ObjectID.isValid(id)) {
+    res.status(404).send();
+  }
+
+  try {
+    const league = await League.findById(id);
+    if (!league) res.status(404).send();
+
+    const division = new Division({
+      name: req.body.name
+    });
+    league.divisions.push(division);
+
+    await league.save();
+
+    res.send(division);
   } catch (e) {
     res.status(400).send(e);
   }
