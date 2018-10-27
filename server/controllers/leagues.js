@@ -6,7 +6,12 @@ const {Division} = require('../models/division');
 
 router.get('/', async (req, res) => {
   try {
-    const leagues = await League.find();
+    const leagues = await League.find()
+      .populate({
+        path: 'divisions',
+        populate: { path: 'divisions' }
+      });
+      
     res.send(leagues);
   } catch (e) {
     res.status(400).send(e);
@@ -21,7 +26,12 @@ router.get('/:id', async (req, res) => {
   }
 
   try {
-    const leagues = await League.findById(id);
+    const leagues = await League.findById(id)
+      .populate({
+        path: 'divisions',
+        populate: { path: 'divisions' }
+      });
+
     res.send(leagues);
   } catch (e) {
     res.status(400).send(e);
@@ -82,26 +92,33 @@ router.delete('/:id', async (req, res) => {
 
 router.post('/:id/divisions', async (req, res) => {
   const id = req.params.id;
-
+  let parent = req.body.parent;
+  
   if (!ObjectID.isValid(id)) {
-    res.status(404).send();
-  }
-
-  if (req.body.parent && !ObjectID.isValid(req.body.parent)) {
-    res.status(404).send();
+    return res.status(404).send();
   }
 
   try {
-    const league = await League.findById(id);
-    if (!league) res.status(404).send();
+    // get parent, send error if not found
+    if (parent) {
+      if (!ObjectID.isValid(parent)) {
+        return res.status(404).send();
+      }
+      parent = await Division.findById(parent);
+    } else {
+      parent = await League.findById(id);
+    }
+    if (!parent) res.status(404).send(e);
 
+    // create division
     const division = new Division({
-      name: req.body.name,
-      parent: req.body.parent
+      name: req.body.name
     });
-    league.divisions.push(division);
 
-    await league.save();
+    // save division / parent
+    await division.save();
+    parent.divisions.push(division._id);
+    await parent.save();
 
     res.send(division);
   } catch (e) {
@@ -112,21 +129,60 @@ router.post('/:id/divisions', async (req, res) => {
 router.put('/:id/divisions/:divisionId', async (req, res) => {
   const id = req.params.id;
   const divisionId = req.params.divisionId;
+  let parent = req.body.parent;
   
   if (!ObjectID.isValid(id) || !ObjectID.isValid(divisionId)) {
     return res.status(404).send();
   }
 
   try {
-    const league = await League.findById(id);
-    const division = league.divisions.id(divisionId);
+    // get parent, send error if not found
+    if (parent) {
+      if (!ObjectID.isValid(parent)) {
+        return res.status(404).send();
+      }
+      parent = await Division.findById(parent);
+    } else {
+      parent = await League.findById(id);
+    }
+    if (!parent) res.status(404).send(e);
+
+    // remove as a child from all leagues / divisions
+    await League.updateMany({
+      divisions: ObjectID(divisionId)
+    }, {
+      $pull: { divisions: ObjectID(divisionId)}
+    });
+
+    await Division.updateMany({
+      divisions: ObjectID(divisionId)
+    }, {
+      $pull: { divisions: ObjectID(divisionId)}
+    });
     
-    const {name, parent} = req.body;
-    division.name = name;
-    division.parent = parent;
+    // save division / parent
+    const {name} = req.body;
+    const division = await Division.findByIdAndUpdate(divisionId, {
+      name
+    }, {
+      new: true
+    });
+    parent.divisions.push(division._id);
+    await parent.save();
 
-    await league.save();
+    // if division has children, add to league
+    if (division.divisions.length) {
+      const league = await League.findById(id);
 
+      // add ids
+      division.divisions.forEach(division => {
+        league.divisions.push(ObjectID(division));
+      });
+
+      // save
+      league.save();
+    } 
+    
     res.send(division);
   } catch (e) {
     res.status(400).send(e);
@@ -142,11 +198,37 @@ router.delete('/:id/divisions/:divisionId', async (req, res) => {
   }
 
   try {
-    const league = await League.findById(id);
-    league.divisions.id(divisionId).remove();
+    // get division
+    const division = await Division.findById(divisionId);
 
-    await league.save();
+    // if division has children, add to league
+    if (division.divisions.length) {
+      const league = await League.findById(id);
 
+      // add ids
+      division.divisions.forEach(division => {
+        league.divisions.push(ObjectID(division));
+      });
+
+      // save
+      league.save();
+    } 
+
+    // remove as a child from all leagues / divisions
+    await League.updateMany({
+      divisions: ObjectID(divisionId)
+    }, {
+      $pull: { divisions: ObjectID(divisionId)}
+    });
+
+    await Division.updateMany({
+      divisions: ObjectID(divisionId)
+    }, {
+      $pull: { divisions: ObjectID(divisionId)}
+    });
+
+    // delete division
+    await division.remove();
     res.send();
   } catch (e) {
     res.status(400).send(e);

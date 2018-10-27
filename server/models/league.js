@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-const {Division} = require('./division');
 const {Team} = require('./team');
 
 const leagueSchema = new mongoose.Schema({
@@ -13,7 +12,10 @@ const leagueSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  divisions: [Division.schema],
+  divisions: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Division' 
+  }],
   teams: [Team.schema],
   start: Date,
   end: Date

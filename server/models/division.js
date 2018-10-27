@@ -6,7 +6,10 @@ const DivisionSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  parent: mongoose.Schema.Types.ObjectId
+  divisions: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Division' 
+  }]
 });
 
 const Division = mongoose.model('Division', DivisionSchema);
