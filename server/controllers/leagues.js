@@ -159,16 +159,8 @@ router.put('/:id/divisions/:divisionId', async (req, res) => {
     }, {
       $pull: { divisions: ObjectID(divisionId)}
     });
-    
-    // save division / parent
-    const {name} = req.body;
-    const division = await Division.findByIdAndUpdate(divisionId, {
-      name
-    }, {
-      new: true
-    });
-    parent.divisions.push(division._id);
-    await parent.save();
+
+    const division = await Division.findById(divisionId);
 
     // if division has children, add to league
     if (division.divisions.length) {
@@ -182,7 +174,14 @@ router.put('/:id/divisions/:divisionId', async (req, res) => {
       // save
       league.save();
     } 
-    
+
+    // update and save division / parent
+    division.name = req.body.name;
+    division.divisions = [];
+    await division.save();
+    parent.divisions.push(division._id);
+    await parent.save();
+
     res.send(division);
   } catch (e) {
     res.status(400).send(e);

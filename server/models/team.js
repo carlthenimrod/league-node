@@ -5,10 +5,6 @@ const TeamSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true
-  },
-  division: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Division'
   }
 });
 
