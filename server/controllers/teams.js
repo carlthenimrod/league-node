@@ -107,12 +107,12 @@ router.put('/:id', async (req, res) => {
 
     // if league, update
     if (league) {
-      league.teams.findByIdAndUpdate(team._id, {name});
+      await league.teams.findByIdAndUpdate(team._id, {name});
     }
 
     // if division, update
     if (division) {
-      division.teams.findByIdAndUpdate(team._id, {name});
+      await division.teams.findByIdAndUpdate(team._id, {name});
     }
 
     res.send(team);

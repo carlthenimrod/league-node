@@ -3,6 +3,7 @@ const {ObjectID} = require('mongodb');
 
 const {League} = require('../models/league');
 const {Division} = require('../models/division');
+const {Team} = require('../models/team');
 
 router.get('/', async (req, res) => {
   try {
@@ -188,47 +189,32 @@ router.put('/:id/divisions/:divisionId', async (req, res) => {
   }
 });
 
-router.delete('/:id/divisions/:divisionId', async (req, res) => {
+router.post('/:id/teams', async (req, res) => {
+  let team;
   const id = req.params.id;
-  const divisionId = req.params.divisionId;
-  
-  if (!ObjectID.isValid(id) || !ObjectID.isValid(divisionId)) {
+  const {
+    _id: teamId,
+    name
+  } = req.body;
+
+  if (!ObjectID.isValid(id)) {
     return res.status(404).send();
   }
 
   try {
-    // get division
-    const division = await Division.findById(divisionId);
+    if (teamId) {
+      team = await Team.findById(teamId);
+      if (!team) res.status(404).send();
+    } else {
+      team = new Team({name});
+      await team.save();
+    }
 
-    // if division has children, add to league
-    if (division.divisions.length) {
-      const league = await League.findById(id);
+    const league = await League.findById(id);
+    league.teams.push(team);
+    await league.save();
 
-      // add ids
-      division.divisions.forEach(division => {
-        league.divisions.push(ObjectID(division));
-      });
-
-      // save
-      league.save();
-    } 
-
-    // remove as a child from all leagues / divisions
-    await League.updateMany({
-      divisions: ObjectID(divisionId)
-    }, {
-      $pull: { divisions: ObjectID(divisionId)}
-    });
-
-    await Division.updateMany({
-      divisions: ObjectID(divisionId)
-    }, {
-      $pull: { divisions: ObjectID(divisionId)}
-    });
-
-    // delete division
-    await division.remove();
-    res.send();
+    res.send(team);
   } catch (e) {
     res.status(400).send(e);
   }
