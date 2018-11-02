@@ -220,4 +220,24 @@ router.post('/:id/teams', async (req, res) => {
   }
 });
 
+router.delete('/:id/teams/:teamId', async (req, res) => {
+  const {
+    id,
+    teamId
+  } = req.params;
+
+  if (!ObjectID.isValid(id) && !ObjectID.isValid(teamId)) {
+    res.status(404).send();
+  }
+
+  try {
+    const league = await League.findById(id);
+    league.teams.id(teamId).remove();
+    await league.save();
+    res.send();
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
 module.exports = router;
