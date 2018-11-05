@@ -1,8 +1,7 @@
 const router = require('express').Router();
 const {ObjectID} = require('mongodb');
 
-const {League} = require('../models/league');
-const {Division} = require('../models/division');
+const {League, Division} = require('../models/league');
 const {Team} = require('../models/team');
 
 router.get('/', async (req, res) => {

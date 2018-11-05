@@ -1,18 +1,12 @@
 const router = require('express').Router();
 const {ObjectID} = require('mongodb');
 
-const {League} = require('../models/league');
-const {Division} = require('../models/division');
+const {League, Division} = require('../models/league');
 const {Team} = require('../models/team');
 
 router.get('/', async (req, res) => {
   try {
-    const leagues = await League.find()
-      .populate({
-        path: 'divisions',
-        populate: { path: 'divisions' }
-      });
-      
+    const leagues = await League.find();
     res.send(leagues);
   } catch (e) {
     res.status(400).send(e);
@@ -27,13 +21,8 @@ router.get('/:id', async (req, res) => {
   }
 
   try {
-    const leagues = await League.findById(id)
-      .populate({
-        path: 'divisions',
-        populate: { path: 'divisions' }
-      });
-
-    res.send(leagues);
+    const league = await League.findById(id);
+    res.send(league);
   } catch (e) {
     res.status(400).send(e);
   }
@@ -93,34 +82,23 @@ router.delete('/:id', async (req, res) => {
 
 router.post('/:id/divisions', async (req, res) => {
   const id = req.params.id;
-  let parent = req.body.parent;
+  const {
+    name,
+    parent
+  } = req.body;
   
   if (!ObjectID.isValid(id)) {
     return res.status(404).send();
   }
 
   try {
-    // get parent, send error if not found
-    if (parent) {
-      if (!ObjectID.isValid(parent)) {
-        return res.status(404).send();
-      }
-      parent = await Division.findById(parent);
-    } else {
-      parent = await League.findById(id);
-    }
-    if (!parent) res.status(404).send(e);
+    const league = await League.findById(id);
+    if (!league) res.status(404).send();
 
-    // create division
-    const division = new Division({
-      name: req.body.name
-    });
+    const division = new Division({name});
 
-    // save division / parent
-    await division.save();
-    parent.divisions.push(division._id);
-    await parent.save();
-
+    league.addDivision(division, parent);
+    await league.save();
     res.send(division);
   } catch (e) {
     res.status(400).send(e);
@@ -130,60 +108,41 @@ router.post('/:id/divisions', async (req, res) => {
 router.put('/:id/divisions/:divisionId', async (req, res) => {
   const id = req.params.id;
   const divisionId = req.params.divisionId;
-  let parent = req.body.parent;
+  const {
+    name,
+    parent
+  } = req.body;
   
   if (!ObjectID.isValid(id) || !ObjectID.isValid(divisionId)) {
     return res.status(404).send();
   }
 
   try {
-    // get parent, send error if not found
-    if (parent) {
-      if (!ObjectID.isValid(parent)) {
-        return res.status(404).send();
-      }
-      parent = await Division.findById(parent);
-    } else {
-      parent = await League.findById(id);
-    }
-    if (!parent) res.status(404).send(e);
+    const league = await League.findById(id);
+    if (!league) res.status(404).send();
 
-    // remove as a child from all leagues / divisions
-    await League.updateMany({
-      divisions: ObjectID(divisionId)
-    }, {
-      $pull: { divisions: ObjectID(divisionId)}
-    });
+    league.updateDivision({name}, parent);
+    await league.save();
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
 
-    await Division.updateMany({
-      divisions: ObjectID(divisionId)
-    }, {
-      $pull: { divisions: ObjectID(divisionId)}
-    });
+router.delete('/:id/divisions/:divisionId', async (req, res) => {
+  const id = req.params.id,
+        divisionId = req.params.divisionId;
 
-    const division = await Division.findById(divisionId);
+  if (!ObjectID.isValid(id) || !ObjectID.isValid(divisionId)) {
+    return res.status(404).send();
+  }
 
-    // if division has children, add to league
-    if (division.divisions.length) {
-      const league = await League.findById(id);
+  try {
+    const league = await League.findById(id);
+    if (!league) res.status(404).send();
 
-      // add ids
-      division.divisions.forEach(division => {
-        league.divisions.push(ObjectID(division));
-      });
-
-      // save
-      league.save();
-    } 
-
-    // update and save division / parent
-    division.name = req.body.name;
-    division.divisions = [];
-    await division.save();
-    parent.divisions.push(division._id);
-    await parent.save();
-
-    res.send(division);
+    league.removeDivision(divisionId);
+    await league.save();
+    res.send();
   } catch (e) {
     res.status(400).send(e);
   }
