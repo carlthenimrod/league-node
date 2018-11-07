@@ -28,81 +28,98 @@ const leagueSchema = new mongoose.Schema({
   end: Date
 });
 
-function addToDivisions (divisions, division, parent) {
+leagueSchema.methods.findDivision = function (id, elements) {
+  const divisions = elements || this.divisions;
+  
   for (let i = 0; i < divisions.length; i++) {
-    if (divisions[i]._id.equals(mongoose.Types.ObjectId(parent))) {
-      divisions[i].divisions.push(division);
-      return true;
+    const d = divisions[i];
+
+    if (d._id.equals(mongoose.Types.ObjectId(id))) {
+      return d;
     }
 
-    if (divisions[i].divisions.length > 0) {
-      if (addToDivisions(divisions[i].divisions, division, parent)) return true;
+    if (d.divisions.length > 0) {
+      const match = this.findDivision(id, d.divisions);
+      if (match) return match;
     }
   }
 }
 
+leagueSchema.methods.findAndRemoveDivisions = function (elements) {
+  const divisions = elements || this.divisions,
+        children = [];
+
+  for (let i = 0; i < divisions.length; i++) {
+    const d = divisions[i];
+
+    if (d.divisions.length > 0) {
+      children.push(...findAndRemoveDivisions(d.divisions));
+    }
+
+    children.push({...d.toObject()});
+  }
+
+  divisions.length = 0;
+  
+  return children;
+}
+
 leagueSchema.methods.addDivision = function (division, parent) {
   if (parent) {
-    if (!addToDivisions(this.divisions, division, parent)) {
-      throw new Error('Parent not found.');
-    }
+    const match = this.findDivision(parent);
+    if (match) match.divisions.push(division);
   } else {
     this.divisions.push(division);
   }
 }
 
-leagueSchema.methods.updateDivision = function (data, parent) {
+leagueSchema.methods.updateDivision = function (divisionId, data, newParent) {
+  const division = this.findDivision(divisionId);
+  const parent = division.parent();
+  newParent = newParent || this._id;
 
-}
-
-function returnSubDivisions (divisions) {
-  let children = [];
-
-  for (let i = 0; i < divisions.length; i++) {
-    const division = divisions[i];
+  if (!parent._id.equals(mongoose.Types.ObjectId(newParent))) {
 
     if (division.divisions.length > 0) {
-      children.push(...returnSubDivisions(division.divisions));
+      const divisions = this.findAndRemoveDivisions(division.divisions);
+      this.divisions.push(...divisions);
     }
 
-    children.push(division);
+    const copy = {...division.toObject()};
 
-    divisions.splice(i, 1);
-  }
-
-  return children;
-}
-
-function removeFromDivisions (divisions, divisionId) {
-  let children = [];
-
-  if (divisions.length > 0) {
-    for (let i = 0; i < divisions.length; i++) {
-      const division = divisions[i];
-
-      if (division.divisions.length > 0) {
-        removeFromDivisions(division.divisions, divisionId);
-      }
-
-      if (division._id.equals(mongoose.Types.ObjectId(divisionId))) {
-        if (division.divisions.length > 0) {
-          children.push(...returnSubDivisions(division.divisions));
-        }
-
-        if (division.divisions.length > 0) {
-          children.push(...division.divisions);
-        }
-
-        divisions.splice(i, 1);
+    for (const prop in data) {
+      if (data.hasOwnProperty(prop)) {
+        copy[prop] = data[prop];
       }
     }
-  }
 
-  return children;
+    if (this._id.equals(mongoose.Types.ObjectId(newParent))) {
+      this.divisions.push(copy);
+    } else {
+      const match = this.findDivision(newParent);
+      match.divisions.push(copy);
+    }
+
+    division.remove();
+
+    return copy;
+  } else {
+    division.set(data);
+
+    return division;
+  }
 }
 
 leagueSchema.methods.removeDivision = function (divisionId) {
-  this.divisions.push(...removeFromDivisions(this.divisions, divisionId));
+  const match = this.findDivision(divisionId);
+  if (!match) throw new Error('No division found.');
+
+  if (match.divisions.length > 0) {
+    const divisions = this.findAndRemoveDivisions(match.divisions);
+    this.divisions.push(...divisions);
+  }
+
+  match.remove();
 }
 
 const Division = mongoose.model('Division', DivisionSchema);
