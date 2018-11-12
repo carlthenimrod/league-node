@@ -7,7 +7,8 @@ const DivisionSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true
-  }
+  },
+  teams: [Team.schema]
 });
 
 DivisionSchema.add({ divisions: [DivisionSchema] });
@@ -120,6 +121,18 @@ leagueSchema.methods.removeDivision = function (divisionId) {
   }
 
   match.remove();
+}
+
+leagueSchema.methods.addTeamToDivision = function (id, divisionId, teamId) {
+  const team = this.teams.id(teamId);
+  if (!team) throw new Error('No team found.');
+
+  const division = this.findDivision(divisionId);
+  if (!division) throw new Error('No Division found.');
+
+  division.teams.push(team);
+
+  return team;
 }
 
 const Division = mongoose.model('Division', DivisionSchema);
