@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const _ = require('lodash');
 
 const {Team} = require('./team');
 
@@ -65,6 +66,21 @@ leagueSchema.methods.findAndRemoveDivisions = function (elements) {
   return children;
 }
 
+leagueSchema.methods.findParentInChildren = function (divisions, id) {
+  for (let i = 0; i < divisions.length; i++) {
+    const d = divisions[i];
+
+    if (d._id.equals(mongoose.Types.ObjectId(id))) return true;
+
+    if (d.divisions.length > 0) {
+      const result = this.findParentInChildren(d.divisions, id);
+      if (result) return true;
+    }
+  }
+
+  return false;
+}
+
 leagueSchema.methods.addDivision = function (division, parent) {
   if (parent) {
     const match = this.findDivision(parent);
@@ -79,35 +95,34 @@ leagueSchema.methods.updateDivision = function (divisionId, data, newParent) {
   const parent = division.parent();
   newParent = newParent || this._id;
 
+  const copy = _.cloneDeep(division.toObject());
+  division.remove();
+
+  for (const prop in data) {
+    if (data.hasOwnProperty(prop)) {
+      copy[prop] = data[prop];
+    }
+  }
+
   if (!parent._id.equals(mongoose.Types.ObjectId(newParent))) {
-
-    if (division.divisions.length > 0) {
-      const divisions = this.findAndRemoveDivisions(division.divisions);
-      this.divisions.push(...divisions);
-    }
-
-    const copy = {...division.toObject()};
-
-    for (const prop in data) {
-      if (data.hasOwnProperty(prop)) {
-        copy[prop] = data[prop];
-      }
-    }
 
     if (this._id.equals(mongoose.Types.ObjectId(newParent))) {
       this.divisions.push(copy);
     } else {
+      const result = this.findParentInChildren(division.divisions, newParent);
+      
+      if (result) {
+        this.divisions.push(...copy.divisions);
+        copy.divisions.length = 0;
+      }
+      
       const match = this.findDivision(newParent);
       match.divisions.push(copy);
     }
-
-    division.remove();
+  } else {
+    parent.divisions.push(copy);
 
     return copy;
-  } else {
-    division.set(data);
-
-    return division;
   }
 }
 
