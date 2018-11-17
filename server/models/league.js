@@ -105,14 +105,13 @@ leagueSchema.methods.updateDivision = function (divisionId, data, newParent) {
   }
 
   if (!parent._id.equals(mongoose.Types.ObjectId(newParent))) {
-
     if (this._id.equals(mongoose.Types.ObjectId(newParent))) {
       this.divisions.push(copy);
     } else {
       const result = this.findParentInChildren(division.divisions, newParent);
       
       if (result) {
-        this.divisions.push(...copy.divisions);
+        parent.divisions.push(...copy.divisions);
         copy.divisions.length = 0;
       }
       
@@ -121,9 +120,9 @@ leagueSchema.methods.updateDivision = function (divisionId, data, newParent) {
     }
   } else {
     parent.divisions.push(copy);
-
-    return copy;
   }
+
+  return copy;
 }
 
 leagueSchema.methods.removeDivision = function (divisionId) {
