@@ -90,13 +90,12 @@ leagueSchema.methods.addDivision = function (division, parent) {
   }
 }
 
-leagueSchema.methods.updateDivision = function (divisionId, data, newParent) {
+leagueSchema.methods.updateDivision = function (divisionId, data, newParent, index) {
   const division = this.findDivision(divisionId);
   const parent = division.parent();
   newParent = newParent || this._id;
 
   const copy = _.cloneDeep(division.toObject());
-  division.remove();
 
   for (const prop in data) {
     if (data.hasOwnProperty(prop)) {
@@ -105,8 +104,15 @@ leagueSchema.methods.updateDivision = function (divisionId, data, newParent) {
   }
 
   if (!parent._id.equals(mongoose.Types.ObjectId(newParent))) {
+    division.remove();
+
     if (this._id.equals(mongoose.Types.ObjectId(newParent))) {
-      this.divisions.push(copy);
+      // check if index is provided, position
+      if (typeof index === 'number') {
+        this.divisions.splice(index, 0, copy);
+      } else {
+        this.divisions.push(copy);
+      }
     } else {
       const result = this.findParentInChildren(division.divisions, newParent);
       
@@ -116,10 +122,31 @@ leagueSchema.methods.updateDivision = function (divisionId, data, newParent) {
       }
       
       const match = this.findDivision(newParent);
-      match.divisions.push(copy);
+
+      // check if index is provided, position
+      if (typeof index === 'number') {
+        match.divisions.splice(index, 0, copy);
+      } else {
+        match.divisions.push(copy);
+      }
     }
   } else {
-    parent.divisions.push(copy);
+    // check if index is provided, position
+    if ((typeof index === 'number') && (index < parent.divisions.length)) {
+      const newDivisions = [];
+      
+      parent.divisions.forEach((d, i) => {
+        if (index === i) { newDivisions.push(copy); }
+        if (!d._id.equals(mongoose.Types.ObjectId(copy._id))) { 
+          newDivisions.push(_.cloneDeep(d));
+        }
+      });
+      
+      parent.divisions = newDivisions;
+    } else {
+      division.remove();
+      parent.divisions.push(copy);
+    }
   }
 
   return copy;
