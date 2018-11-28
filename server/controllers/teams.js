@@ -13,6 +13,21 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/:id', async (req, res) => {
+  const id = req.params.id;
+  
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send();
+  }
+
+  try {
+    const team = await Team.findById(id);
+    res.send(team);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
 router.post('/', async (req, res) => {
   let league,
       division;
