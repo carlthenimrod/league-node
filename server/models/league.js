@@ -176,6 +176,21 @@ leagueSchema.methods.addTeamToDivision = function (id, divisionId, teamId) {
   return team;
 }
 
+leagueSchema.methods.moveTeam = function (teamId, index) {
+  const team = this.teams.id(teamId);
+
+  // insert team, remove old team
+  this.teams.splice(index, 0, _.cloneDeep(team.toObject()));
+
+  this.teams.forEach((t, i) => {
+    if (t.equals(mongoose.Types.ObjectId(teamId)) && !t.isNew) {
+      this.teams.splice(i, 1);
+    }
+  });
+
+  return this.teams;
+}
+
 const Division = mongoose.model('Division', DivisionSchema);
 const League = mongoose.model('League', leagueSchema);
 

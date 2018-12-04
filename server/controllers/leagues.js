@@ -182,7 +182,6 @@ router.post('/:id/teams', async (req, res) => {
 });
 
 router.put('/:id/teams/:teamId', async (req, res) => {
-  let team;
   const {
     id,
     teamId
@@ -196,15 +195,11 @@ router.put('/:id/teams/:teamId', async (req, res) => {
 
   try {
     const league = await League.findById(id);
-    const team = league.teams.id(teamId);
-
-    // remove, and re-position
-    team.remove();
-    league.teams.splice(index, 0, team);
+    const teams = league.moveTeam(teamId, index);
 
     await league.save();
 
-    res.send(league.teams);
+    res.send(teams);
   } catch (e) {
     res.status(400).send(e);
   }
@@ -224,7 +219,7 @@ router.delete('/:id/teams/:teamId', async (req, res) => {
     const league = await League.findById(id);
     league.teams.id(teamId).remove();
     await league.save();
-    res.send();
+    res.send(league.teams);
   } catch (e) {
     res.status(400).send(e);
   }
