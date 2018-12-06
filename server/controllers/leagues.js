@@ -122,9 +122,9 @@ router.put('/:id/divisions/:divisionId', async (req, res) => {
     const league = await League.findById(id);
     if (!league) res.status(404).send();
 
-    const division = league.updateDivision(divisionId, {name}, parent, index);
+    league.updateDivision(divisionId, {name}, parent, index);
     await league.save();
-    res.send(division);
+    res.send(league.divisions);
   } catch (e) {
     res.status(400).send(e);
   }
