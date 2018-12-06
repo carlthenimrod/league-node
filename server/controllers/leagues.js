@@ -246,4 +246,25 @@ router.post('/:id/divisions/:divisionId/teams/:teamId', async (req, res) => {
   }
 });
 
+router.put('/:id/divisions/:divisionId/teams/:teamId', async (req, res) => {
+  const {
+    id,
+    divisionId,
+    teamId
+  } = req.params;
+
+  if (!ObjectID.isValid(id) && !ObjectID.isValid(divisionId) && !ObjectID.isValid(teamId)) {
+    res.status(404).send();
+  }
+
+  try {
+    const league = await League.findById(id);
+    const divisions = league.moveTeamToDivision(id, divisionId, teamId);
+    await league.save();
+    res.send(divisions);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
 module.exports = router;

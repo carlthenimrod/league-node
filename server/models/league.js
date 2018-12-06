@@ -176,6 +176,43 @@ leagueSchema.methods.addTeamToDivision = function (id, divisionId, teamId) {
   return team;
 }
 
+leagueSchema.methods.moveTeamToDivision = function (id, divisionId, teamId) {
+  const team = this.teams.id(teamId);
+  if (!team) throw new Error('No team found.');
+
+  const division = this.findDivision(divisionId);
+  if (!division) throw new Error('No Division found.');
+
+  // remove team from divisions
+  this.removeTeamFromDivisions(teamId);
+
+  // add team to new division
+  division.teams.push(team);
+
+  return this.divisions;
+}
+
+leagueSchema.methods.removeTeamFromDivisions = function (teamId, elements) {
+  const divisions = elements || this.divisions;
+
+  // for each division
+  for (let i = 0; i < divisions.length; i++) {
+    const d = divisions[i];
+    
+    // search teams
+    if (d.teams.length > 0) {
+      for (let x = 0; x < d.teams.length; x++) {
+        const t = d.teams[x];
+        
+        if (t._id.equals(mongoose.Types.ObjectId(teamId))) { t.remove(); }
+      }
+    }
+
+    // if sub-division exist, do same thing
+    if (d.divisions.length > 0) { this.removeTeamFromDivisions(teamId, d.divisions); }
+  }
+}
+
 leagueSchema.methods.moveTeam = function (teamId, index) {
   const team = this.teams.id(teamId);
 
