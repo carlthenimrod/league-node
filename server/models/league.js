@@ -58,7 +58,7 @@ leagueSchema.methods.findAndRemoveDivisions = function (elements) {
       children.push(...findAndRemoveDivisions(d.divisions));
     }
 
-    children.push({...d.toObject()});
+    children.push(_.cloneDeep(d.toObject()));
   }
 
   divisions.length = 0;
@@ -174,8 +174,6 @@ leagueSchema.methods.addTeamToDivision = function (id, divisionId, teamId) {
   this.removeTeamFromDivisions(teamId);
 
   division.teams.push(team);
-
-  return this.divisions;
 }
 
 leagueSchema.methods.removeTeamFromDivisions = function (teamId, elements) {
@@ -210,8 +208,6 @@ leagueSchema.methods.moveTeam = function (teamId, index) {
       this.teams.splice(i, 1);
     }
   });
-
-  return this.teams;
 }
 
 const Division = mongoose.model('Division', DivisionSchema);

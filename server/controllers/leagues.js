@@ -144,7 +144,7 @@ router.delete('/:id/divisions/:divisionId', async (req, res) => {
 
     league.removeDivision(divisionId);
     await league.save();
-    res.send();
+    res.send(league.divisions);
   } catch (e) {
     res.status(400).send(e);
   }
@@ -195,11 +195,11 @@ router.put('/:id/teams/:teamId', async (req, res) => {
 
   try {
     const league = await League.findById(id);
-    const teams = league.moveTeam(teamId, index);
+    league.moveTeam(teamId, index);
 
     await league.save();
 
-    res.send(teams);
+    res.send(league.teams);
   } catch (e) {
     res.status(400).send(e);
   }
@@ -217,9 +217,10 @@ router.delete('/:id/teams/:teamId', async (req, res) => {
 
   try {
     const league = await League.findById(id);
+    league.removeTeamFromDivisions(teamId);
     league.teams.id(teamId).remove();
     await league.save();
-    res.send(league.teams);
+    res.send(league);
   } catch (e) {
     res.status(400).send(e);
   }
@@ -238,9 +239,9 @@ router.post('/:id/divisions/:divisionId/teams/:teamId', async (req, res) => {
 
   try {
     const league = await League.findById(id);
-    const divisions = league.addTeamToDivision(id, divisionId, teamId);
+    league.addTeamToDivision(id, divisionId, teamId);
     await league.save();
-    res.send(divisions);
+    res.send(league.divisions);
   } catch (e) {
     res.status(400).send(e);
   }
