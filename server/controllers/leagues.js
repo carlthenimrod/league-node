@@ -232,6 +232,7 @@ router.post('/:id/divisions/:divisionId/teams/:teamId', async (req, res) => {
     divisionId,
     teamId
   } = req.params;
+  const index = req.body.index;
 
   if (!ObjectID.isValid(id) && !ObjectID.isValid(divisionId) && !ObjectID.isValid(teamId)) {
     res.status(404).send();
@@ -239,7 +240,7 @@ router.post('/:id/divisions/:divisionId/teams/:teamId', async (req, res) => {
 
   try {
     const league = await League.findById(id);
-    league.addTeamToDivision(id, divisionId, teamId);
+    league.addTeamToDivision(divisionId, teamId, index);
     await league.save();
     res.send(league.divisions);
   } catch (e) {

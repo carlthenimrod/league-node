@@ -164,7 +164,7 @@ leagueSchema.methods.removeDivision = function (divisionId) {
   match.remove();
 }
 
-leagueSchema.methods.addTeamToDivision = function (id, divisionId, teamId) {
+leagueSchema.methods.addTeamToDivision = function (divisionId, teamId, index) {
   const team = this.teams.id(teamId);
   if (!team) throw new Error('No team found.');
 
@@ -173,7 +173,11 @@ leagueSchema.methods.addTeamToDivision = function (id, divisionId, teamId) {
 
   this.removeTeamFromDivisions(teamId);
 
-  division.teams.push(team);
+  if (typeof index === 'number') {
+    division.teams.splice(index, 0, team);
+  } else {
+    division.teams.push(team);
+  }
 }
 
 leagueSchema.methods.removeTeamFromDivisions = function (teamId, elements) {
