@@ -171,22 +171,8 @@ leagueSchema.methods.addTeamToDivision = function (id, divisionId, teamId) {
   const division = this.findDivision(divisionId);
   if (!division) throw new Error('No Division found.');
 
-  division.teams.push(team);
-
-  return team;
-}
-
-leagueSchema.methods.moveTeamToDivision = function (id, divisionId, teamId) {
-  const team = this.teams.id(teamId);
-  if (!team) throw new Error('No team found.');
-
-  const division = this.findDivision(divisionId);
-  if (!division) throw new Error('No Division found.');
-
-  // remove team from divisions
   this.removeTeamFromDivisions(teamId);
 
-  // add team to new division
   division.teams.push(team);
 
   return this.divisions;
