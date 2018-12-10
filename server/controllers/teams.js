@@ -3,6 +3,7 @@ const {ObjectID} = require('mongodb');
 
 const {League, Division} = require('../models/league');
 const {Team} = require('../models/team');
+const {User} = require('../models/user');
 
 router.get('/', async (req, res) => {
   try {
@@ -147,6 +148,33 @@ router.delete('/:id', async (req, res) => {
     res.send();
   } catch (e) {
     res.status(400).send(e);
+  }
+});
+
+router.post('/:id/users', async (req, res) => {
+  const id = req.params.id;
+  const {
+    userId,
+    roles
+  } = req.body;
+
+  if (!ObjectID.isValid(id)) { return res.status(404).send(); }
+  if (!ObjectID.isValid(userId)) { return res.status(404).send(); }
+
+  try {
+    const team = await Team.findById(id);
+    if (!team) { res.status(404).send(); }
+
+    const user = await User.findById(userId);
+    if (!user) { res.status(404).send(); }
+
+    team.roster.push({user, roles});
+
+    await team.save();
+
+    res.send(team);
+  } catch (e) {
+    return res.status(400).send(e);
   }
 });
 

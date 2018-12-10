@@ -26,14 +26,13 @@ const UserSchema = new mongoose.Schema({
     type: String,
     minlength: 6,
     required: true,
-    trim: true
+    trim: true,
+    select: false
   },
-  tokens: [{
-    token: String
-  }],
-  roles: [{ 
-    type: String 
-  }]
+  tokens: {
+    type: [{ token: String }],
+    select: false
+  }
 });
 
 UserSchema.pre('save', function (next) {
