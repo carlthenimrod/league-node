@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
-const uniqueValidator = require('mongoose-unique-validator');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
@@ -15,7 +14,6 @@ const UserSchema = new mongoose.Schema({
   email: {
     type: String,
     trim: true,
-    unique: true,
     validate: {
       validator: validator.isEmail,
       message: '{VALUE} is not a valid email.'
@@ -113,8 +111,6 @@ UserSchema.methods.generateTokens = async function () {
 
   return {access_token, refresh_token, client};
 };
-
-UserSchema.plugin(uniqueValidator);
 
 const User = mongoose.model('User', UserSchema);
 

@@ -178,15 +178,70 @@ router.post('/:id/users', async (req, res) => {
     // save new user, if new
     if (userId) { 
       // remove user if exists
-      for (let i = 0; i < team.roster.length; i++) {
-        const u = team.roster[i];
-        if (u._id === user._id) { u.remove(); }
+      for (let i = 0; i < team.roster.length; i++) {5
+        const u = team.roster[i].user;
+
+        if (u._id.equals(ObjectID(user._id))) { u.remove(); }
       }
     } else {
       user.save(); 
     }
 
     team.roster.push({user, roles});
+
+    await team.save();
+
+    res.send(team);
+  } catch (e) {
+    return res.status(400).send(e);
+  }
+});
+
+router.put('/:id/users/:userId', async (req, res) => {
+  const {id, userId} = req.params;
+  const {roles} = req.body;
+
+  if (!ObjectID.isValid(id)) { return res.status(404).send(); }
+  if (!ObjectID.isValid(userId)) { return res.status(404).send(); }
+
+  try {
+    // find team
+    const team = await Team.findById(id);
+    if (!team) { res.status(404).send(); }
+    
+    for (let i = 0; i < team.roster.length; i++) {5
+      const u = team.roster[i].user;
+
+      if (u._id.equals(ObjectID(userId))) {
+        team.roster[i].roles = roles;
+      }
+    }
+
+    await team.save();
+
+    res.send(team);
+  } catch (e) {
+    return res.status(400).send(e);
+  }
+});
+
+router.delete('/:id/users/:userId', async (req, res) => {
+  const {id, userId} = req.params;
+
+  if (!ObjectID.isValid(id)) { return res.status(404).send(); }
+  if (!ObjectID.isValid(userId)) { return res.status(404).send(); }
+
+  try {
+    const team = await Team.findById(id);
+    if (!team) { res.status(404).send(); }
+    
+    for (let i = 0; i < team.roster.length; i++) {5
+      const u = team.roster[i].user;
+
+      if (u._id.equals(ObjectID(userId))) {
+        team.roster.splice(i, 1);
+      }
+    }
 
     await team.save();
 
