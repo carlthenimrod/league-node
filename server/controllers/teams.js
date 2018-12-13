@@ -155,18 +155,36 @@ router.post('/:id/users', async (req, res) => {
   const id = req.params.id;
   const {
     userId,
+    name,
     roles
   } = req.body;
+  let user;
 
   if (!ObjectID.isValid(id)) { return res.status(404).send(); }
-  if (!ObjectID.isValid(userId)) { return res.status(404).send(); }
 
   try {
+    // check if user exists already
+    if (userId) {
+      user = await User.findById(userId);
+      if (!user) { res.status(404).send(); }
+    } else { // create new
+      user = new User({name});
+    }
+
+    // find team
     const team = await Team.findById(id);
     if (!team) { res.status(404).send(); }
 
-    const user = await User.findById(userId);
-    if (!user) { res.status(404).send(); }
+    // save new user, if new
+    if (userId) { 
+      // remove user if exists
+      for (let i = 0; i < team.roster.length; i++) {
+        const u = team.roster[i];
+        if (u._id === user._id) { u.remove(); }
+      }
+    } else {
+      user.save(); 
+    }
 
     team.roster.push({user, roles});
 
