@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const {ObjectID} = require('mongodb');
 
 const {auth} = require('../middleware/auth');
 const {User} = require('../models/user');
@@ -7,6 +8,21 @@ router.get('/', async (req, res) => {
   try {
     const users = await User.find();
     res.send(users);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
+router.get('/:id', async (req, res) => {
+  const id = req.params.id;
+  
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send();
+  }
+
+  try {
+    const user = await User.findById(id);
+    res.send(user);
   } catch (e) {
     res.status(400).send(e);
   }
