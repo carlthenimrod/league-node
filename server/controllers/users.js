@@ -3,6 +3,7 @@ const {ObjectID} = require('mongodb');
 
 const {auth} = require('../middleware/auth');
 const {User} = require('../models/user');
+const {Team} = require('../models/team');
 
 router.get('/', async (req, res) => {
   try {
@@ -72,7 +73,15 @@ router.delete('/:id', async (req, res) => {
   }
 
   try {
+    // remove user from any teams they are on
+    await Team.updateMany(
+      { 'roster.user': id }, 
+      { $pull: { roster: { user: id } } }
+    );
+
+    // delete user
     await User.findByIdAndDelete(id);
+
     res.send();
   } catch (e) {
     res.status(400).send(e);
