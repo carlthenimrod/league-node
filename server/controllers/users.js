@@ -43,6 +43,41 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.put('/:id', async (req, res) => {
+  const id = req.params.id;
+  
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send();
+  }
+
+  try {
+    const {name} = req.body;
+    const user = await User.findByIdAndUpdate(id, {
+      name
+    }, {
+      new: true
+    });
+    res.send(user);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
+router.delete('/:id', async (req, res) => {
+  const id = req.params.id;
+  
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send();
+  }
+
+  try {
+    await User.findByIdAndDelete(id);
+    res.send();
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
 router.get('/me', auth, (req, res) => {
   res.send(req.user);
 });
