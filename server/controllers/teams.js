@@ -7,7 +7,7 @@ const {User} = require('../models/user');
 
 router.get('/', async (req, res) => {
   try {
-    const teams = await Team.find();
+    const teams = await Team.find().populate('roster.user');;
     res.send(teams);
   } catch (e) {
     res.status(400).send(e);
@@ -22,7 +22,7 @@ router.get('/:id', async (req, res) => {
   }
 
   try {
-    const team = await Team.findById(id);
+    const team = await Team.findById(id).populate('roster.user');
     res.send(team);
   } catch (e) {
     res.status(400).send(e);
@@ -172,7 +172,7 @@ router.post('/:id/users', async (req, res) => {
     }
 
     // find team
-    const team = await Team.findById(id);
+    const team = await Team.findById(id).populate('roster.user');
     if (!team) { res.status(404).send(); }
 
     // save new user, if new
@@ -181,7 +181,9 @@ router.post('/:id/users', async (req, res) => {
       for (let i = 0; i < team.roster.length; i++) {5
         const u = team.roster[i].user;
 
-        if (u._id.equals(ObjectID(user._id))) { u.remove(); }
+        if (u._id.equals(ObjectID(user._id))) { 
+          team.roster.splice(i, 1); 
+        }
       }
     } else {
       user.save(); 
@@ -206,10 +208,10 @@ router.put('/:id/users/:userId', async (req, res) => {
 
   try {
     // find team
-    const team = await Team.findById(id);
+    const team = await Team.findById(id).populate('roster.user');
     if (!team) { res.status(404).send(); }
     
-    for (let i = 0; i < team.roster.length; i++) {5
+    for (let i = 0; i < team.roster.length; i++) {
       const u = team.roster[i].user;
 
       if (u._id.equals(ObjectID(userId))) {
@@ -232,7 +234,7 @@ router.delete('/:id/users/:userId', async (req, res) => {
   if (!ObjectID.isValid(userId)) { return res.status(404).send(); }
 
   try {
-    const team = await Team.findById(id);
+    const team = await Team.findById(id).populate('roster.user');
     if (!team) { res.status(404).send(); }
     
     for (let i = 0; i < team.roster.length; i++) {5

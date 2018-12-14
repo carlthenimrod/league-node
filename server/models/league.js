@@ -24,6 +24,11 @@ const leagueSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  status: {
+    type: String,
+    enum: ['draft', 'recruiting', 'active', 'completed', 'canceled'],
+    default: 'draft'
+  },
   divisions: [DivisionSchema],
   teams: [Team.schema],
   start: Date,

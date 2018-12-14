@@ -25,6 +25,11 @@ const UserSchema = new mongoose.Schema({
     trim: true,
     select: false
   },
+  status: {
+    type: String,
+    enum: ['new', 'active', 'inactive', 'banned'],
+    default: 'new'
+  },
   tokens: {
     type: [{ token: String }],
     select: false
