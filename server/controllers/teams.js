@@ -36,7 +36,8 @@ router.post('/', async (req, res) => {
   const {
     leagueId, 
     divisionId,
-    name
+    name,
+    status
   } = req.body;
 
   // if leagueId provided, check if valid and exists
@@ -61,7 +62,7 @@ router.post('/', async (req, res) => {
 
   try {
     // create save team
-    const team = new Team({name});
+    const team = new Team({name, status});
     await team.save();
 
     // if league, save
@@ -90,7 +91,8 @@ router.put('/:id', async (req, res) => {
   const {
     leagueId, 
     divisionId,
-    name
+    name,
+    status
   } = req.body;
   
   if (!ObjectID.isValid(id)) {
@@ -118,16 +120,16 @@ router.put('/:id', async (req, res) => {
   }
 
   try {
-    const team = await Team.findByIdAndUpdate(id, {name}, {new: true});
+    const team = await Team.findByIdAndUpdate(id, {name, status}, {new: true});
 
     // if league, update
     if (league) {
-      await league.teams.findByIdAndUpdate(team._id, {name});
+      await league.teams.findByIdAndUpdate(team._id, {name, status});
     }
 
     // if division, update
     if (division) {
-      await division.teams.findByIdAndUpdate(team._id, {name});
+      await division.teams.findByIdAndUpdate(team._id, {name, status});
     }
 
     res.send(team);
