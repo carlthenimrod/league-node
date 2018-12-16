@@ -3,6 +3,7 @@ const {ObjectID} = require('mongodb');
 
 const {League, Division} = require('../models/league');
 const {Team} = require('../models/team');
+const {Notification} = require('../models/notification');
 
 router.get('/', async (req, res) => {
   try {
@@ -167,8 +168,7 @@ router.post('/:id/teams', async (req, res) => {
       team = await Team.findById(teamId);
       if (!team) res.status(404).send();
     } else {
-      team = new Team({name});
-      await team.save();
+      team = await Team.create({name});
     }
 
     const league = await League.findById(id);

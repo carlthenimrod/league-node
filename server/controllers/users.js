@@ -53,12 +53,12 @@ router.put('/:id', async (req, res) => {
 
   try {
     const {name, status} = req.body;
-    const user = await User.findByIdAndUpdate(id, {
-      name,
-      status
-    }, {
-      new: true
-    });
+
+    const user = await User.findById(id);
+    user.name = name;
+    user.status = status;
+    await user.save();
+
     res.send(user);
   } catch (e) {
     res.status(400).send(e);

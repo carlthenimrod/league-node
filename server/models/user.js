@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
 const config = require('../config/config');
+const {Notification} = require('../models/notification');
 
 const UserSchema = new mongoose.Schema({
   name: {
@@ -28,7 +29,11 @@ const UserSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['new', 'active', 'inactive', 'banned'],
-    default: 'new'
+    default: 'new',
+    set: function(status) {
+      this._status = this.status;
+      return status;
+    }
   },
   tokens: {
     type: [{ token: String }],
@@ -44,6 +49,22 @@ UserSchema.pre('save', function (next) {
     });
   } else {
     next();
+  }
+});
+
+UserSchema.pre('save', async function () {
+  if (this.isNew) {
+    await Notification.create({
+      notice: 'new',
+      item: this._id,
+      itemType: 'User'
+    });
+  }
+  
+  if (this.isModified('status')) {
+    if (this._status === 'new' && this.status !== this._status) {
+      await Notification.findOneAndRemove({ item: this._id, notice: 'new' });
+    }
   }
 });
 

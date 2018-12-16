@@ -120,7 +120,14 @@ router.put('/:id', async (req, res) => {
   }
 
   try {
-    const team = await Team.findByIdAndUpdate(id, {name, status}, {new: true});
+    const team = await Team.findById(id);
+
+    if (team) {
+      team.name = name;
+      team.status = status;
+
+      await team.save();
+    }
 
     // if league, update
     if (league) {
@@ -188,7 +195,7 @@ router.post('/:id/users', async (req, res) => {
         }
       }
     } else {
-      user.save(); 
+      await user.save();
     }
 
     team.roster.push({user, roles});
