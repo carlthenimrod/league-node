@@ -3,7 +3,6 @@ const {ObjectID} = require('mongodb');
 
 const {League, Division} = require('../models/league');
 const {Team} = require('../models/team');
-const {Notification} = require('../models/notification');
 
 router.get('/', async (req, res) => {
   try {
