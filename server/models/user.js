@@ -53,15 +53,15 @@ UserSchema.pre('save', function (next) {
 });
 
 UserSchema.pre('save', async function () {
-  if (this.isNew) {
+  if (this.isNew && this.status === 'new') {
     await Notification.create({
       notice: 'new',
       item: this._id,
       itemType: 'User'
     });
   }
-  
-  if (this.isModified('status')) {
+
+  if (!this.isNew && this.isModified('status')) {
     if (this._status === 'new' && this.status !== this._status) {
       await Notification.findOneAndRemove({ item: this._id, notice: 'new' });
     }
