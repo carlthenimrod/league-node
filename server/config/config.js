@@ -10,6 +10,13 @@ const config = {
   refreshToken: {
     secret: process.env.REFRESH_TOKEN_SECRET || 'random_string',
     expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '30d'
+  },
+  email: {
+    host: process.env.EMAIL_HOST || false,
+    port: process.env.EMAIL_PORT || false,
+    user: process.env.EMAIL_USER || false,
+    pass: process.env.EMAIL_PASSWORD || false,
+    default: process.env.EMAIL_FROM_DEFAULT || false
   }
 };
 
