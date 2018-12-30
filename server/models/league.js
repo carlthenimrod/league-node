@@ -3,7 +3,7 @@ const _ = require('lodash');
 
 const {Team} = require('./team');
 
-const DivisionSchema = new mongoose.Schema({
+const divisionSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -12,7 +12,7 @@ const DivisionSchema = new mongoose.Schema({
   teams: [Team.schema]
 });
 
-DivisionSchema.add({ divisions: [DivisionSchema] });
+divisionSchema.add({ divisions: [divisionSchema] });
 
 const leagueSchema = new mongoose.Schema({
   name: {
@@ -29,8 +29,9 @@ const leagueSchema = new mongoose.Schema({
     enum: ['draft', 'recruiting', 'active', 'completed', 'canceled'],
     default: 'draft'
   },
-  divisions: [DivisionSchema],
+  divisions: [divisionSchema],
   teams: [Team.schema],
+  schedule: [],
   start: Date,
   end: Date
 });
@@ -226,7 +227,7 @@ leagueSchema.methods.moveTeam = function (teamId, index) {
   });
 }
 
-const Division = mongoose.model('Division', DivisionSchema);
+const Division = mongoose.model('Division', divisionSchema);
 const League = mongoose.model('League', leagueSchema);
 
 module.exports = {Division, League};

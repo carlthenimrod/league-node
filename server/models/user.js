@@ -6,7 +6,7 @@ const bcrypt = require('bcrypt');
 const config = require('../config/config');
 const {Notice} = require('./notice');
 
-const UserSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -41,7 +41,7 @@ const UserSchema = new mongoose.Schema({
   }
 });
 
-UserSchema.pre('save', function (next) {
+userSchema.pre('save', function (next) {
   if (this.isModified('password')) {
     bcrypt.hash(this.password, 10, (err, hash) => {
       this.password = hash;
@@ -52,7 +52,7 @@ UserSchema.pre('save', function (next) {
   }
 });
 
-UserSchema.pre('save', async function () {
+userSchema.pre('save', async function () {
   if (this.isNew && this.status === 'new') {
     await Notice.create({
       notice: 'new',
@@ -68,7 +68,7 @@ UserSchema.pre('save', async function () {
   }
 });
 
-UserSchema.statics.findByCredentials = async function (email, password) {
+userSchema.statics.findByCredentials = async function (email, password) {
   const user = await this.findOne({email});
   if (!user) throw new Error('User not found.');
 
@@ -80,7 +80,7 @@ UserSchema.statics.findByCredentials = async function (email, password) {
   }
 };
 
-UserSchema.statics.refreshToken = async function (client, refresh_token) {
+userSchema.statics.refreshToken = async function (client, refresh_token) {
   const decoded = jwt.verify(refresh_token, config.refreshToken.secret);
   if (decoded.client !== client) throw new Error();
 
@@ -101,7 +101,7 @@ UserSchema.statics.refreshToken = async function (client, refresh_token) {
   return access_token;
 };
 
-UserSchema.statics.removeToken = async function (client, refresh_token) {
+userSchema.statics.removeToken = async function (client, refresh_token) {
   const user = await this.findOne({
     'tokens._id': client,
     'tokens.token': refresh_token
@@ -113,7 +113,7 @@ UserSchema.statics.removeToken = async function (client, refresh_token) {
   await user.save();
 };
 
-UserSchema.methods.generateTokens = async function () {
+userSchema.methods.generateTokens = async function () {
   const access_token = jwt.sign({
     _id: this._id,
     email: this.email,
@@ -138,6 +138,6 @@ UserSchema.methods.generateTokens = async function () {
   return {access_token, refresh_token, client};
 };
 
-const User = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', userSchema);
 
 module.exports = {User};

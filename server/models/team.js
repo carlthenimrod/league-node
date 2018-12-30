@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const {Notice} = require('./notice');
 
-const TeamSchema = new mongoose.Schema({
+const teamSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -23,7 +23,7 @@ const TeamSchema = new mongoose.Schema({
   }]
 });
 
-TeamSchema.pre('save', async function () {
+teamSchema.pre('save', async function () {
   if (this.isNew && this.status === 'new') {
     await Notice.create({
       notice: 'new',
@@ -39,6 +39,6 @@ TeamSchema.pre('save', async function () {
   }
 });
 
-const Team = mongoose.model('Team', TeamSchema);
+const Team = mongoose.model('Team', teamSchema);
 
 module.exports = {Team};
