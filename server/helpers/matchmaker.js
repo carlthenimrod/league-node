@@ -1,3 +1,5 @@
+const moment = require('moment');
+
 const {Game} = require('../models/game');
 
 shuffle = function (a) {
@@ -72,11 +74,13 @@ createTeams = function (league) {
   return teams;
 }
 
-createGames = function (league, teams, set) {
+createGames = function (league, teams, set, date) {
   const games = [];
   let current = 0;
   
   while (current < set) {
+    shuffle(teams);
+
     for (let i = 0; i < teams.length; i++) {
       const team = teams[i];
 
@@ -124,6 +128,7 @@ createGames = function (league, teams, set) {
         opponent.notPlayed.splice(opponent.notPlayed.indexOf(team._id), 1);
 
         const game = new Game({ home, away });
+        if (date) game.start = date;
         games.push(game);
       }
     }
@@ -163,6 +168,9 @@ matchMake = function (teams, team, host) {
     // check if same team
     if (t._id.equals(team._id)) continue;
 
+    // check if has already played another team this set
+    if (t.set > team.set) continue;
+
     // check if already played
     if (t.played.indexOf(team._id) > -1) continue;
 
@@ -184,16 +192,16 @@ matchMake = function (teams, team, host) {
 
     // add / subtract points based on total home / away games
     if (host) {
-      if (m.away > m.home) { m.points = m.points + 2; }
-      if (m.away === m.home) { m.points = m.points + 1; }
-    } else {
       if (m.home > m.away) { m.points = m.points + 2; }
       if (m.home === m.away) { m.points = m.points + 1; }
+    } else {
+      if (m.away > m.home) { m.points = m.points + 2; }
+      if (m.away === m.home) { m.points = m.points + 1; }
     }
 
     // check how many games already played against
     const opponent = team.opponents.find(o => o._id.equals(m._id));
-    m.points = m.points + opponent.timesPlayed;
+    m.points = m.points - opponent.timesPlayed;
   }
 
   // get best match
@@ -224,7 +232,6 @@ module.exports = (league, options) => {
 
       while (total > 0) {
         ++i
-        shuffle(teams);
         const label = `Week ${i}`;
         const games = createGames(league, teams, per);
 
@@ -235,7 +242,46 @@ module.exports = (league, options) => {
     } else {
       throw new Error('Options Invalid');
     }
-  } else {
+  } else if (options.strategy === 'date') {
+    let {start, end, days} = options;
 
+    if (start && end && days) {
+      start = moment(start);
+      end = moment(end);
+
+      if (!start.isValid() || !end.isValid()) {
+        throw new Error('Dates Invalid');
+      }
+
+      if (!(days instanceof Array) || days.length === 0) {
+        throw new Error('No Days included');
+      }
+      
+      let i = 1;
+      let label = `Week ${i}`;
+      const teams = createTeams(league);
+      const games = [];
+
+      while (start.isSameOrBefore(end)) {
+        const day = start.format('dddd');
+
+        // create single set of games if match
+        if (days.indexOf(day) > -1) {
+          games.push(...createGames(league, teams, 1, start));
+        }
+
+        // new week, add games, reset data
+        if (day === 'Sunday' && games.length > 0) {
+          league.schedule.push({ label, games });
+
+          ++i;
+          games.length = 0;
+        }
+        
+        start.add(1, 'd');
+      }
+    } else {
+      throw new Error('Options Invalid');
+    }
   }
 };

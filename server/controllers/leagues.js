@@ -256,9 +256,9 @@ router.post('/:id/schedule', async (req, res) => {
   try {
     const league = await League.findById(id);
     league.generateSchedule(options);
-    
+
     // await league.save();
-    res.send();
+    res.send(league.schedule);
   } catch (e) {
     res.status(400).send(e);
   }
