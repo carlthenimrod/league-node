@@ -1,7 +1,10 @@
 const mongoose = require('mongoose');
+const ObjectId = mongoose.Types.ObjectId;
 const _ = require('lodash');
 
+const matchmaker = require('../helpers/matchmaker');
 const {Team} = require('./team');
+const {Game} = require('./game');
 
 const divisionSchema = new mongoose.Schema({
   name: {
@@ -31,7 +34,10 @@ const leagueSchema = new mongoose.Schema({
   },
   divisions: [divisionSchema],
   teams: [Team.schema],
-  schedule: [],
+  schedule: [{
+    label: { type: String },
+    games: [Game.schema]
+  }],
   start: Date,
   end: Date
 });
@@ -42,7 +48,7 @@ leagueSchema.methods.findDivision = function (id, elements) {
   for (let i = 0; i < divisions.length; i++) {
     const d = divisions[i];
 
-    if (d._id.equals(mongoose.Types.ObjectId(id))) {
+    if (d._id.equals(ObjectId(id))) {
       return d;
     }
 
@@ -76,7 +82,7 @@ leagueSchema.methods.findParentInChildren = function (divisions, id) {
   for (let i = 0; i < divisions.length; i++) {
     const d = divisions[i];
 
-    if (d._id.equals(mongoose.Types.ObjectId(id))) return true;
+    if (d._id.equals(ObjectId(id))) return true;
 
     if (d.divisions.length > 0) {
       const result = this.findParentInChildren(d.divisions, id);
@@ -111,10 +117,10 @@ leagueSchema.methods.updateDivision = function (divisionId, data, newParent, ind
       }
     }
   
-    if (!parent._id.equals(mongoose.Types.ObjectId(newParent))) {
+    if (!parent._id.equals(ObjectId(newParent))) {
       division.remove();
   
-      if (this._id.equals(mongoose.Types.ObjectId(newParent))) {
+      if (this._id.equals(ObjectId(newParent))) {
         // check if index is provided, position
         if (typeof index === 'number') {
           this.divisions.splice(index, 0, copy);
@@ -145,7 +151,7 @@ leagueSchema.methods.updateDivision = function (divisionId, data, newParent, ind
         
         parent.divisions.forEach((d, i) => {
           if (index === i) { newDivisions.push(copy); }
-          if (!d._id.equals(mongoose.Types.ObjectId(copy._id))) { 
+          if (!d._id.equals(ObjectId(copy._id))) { 
             newDivisions.push(_.cloneDeep(d));
           }
         });
@@ -205,7 +211,7 @@ leagueSchema.methods.removeTeamFromDivisions = function (teamId, elements) {
       for (let x = 0; x < d.teams.length; x++) {
         const t = d.teams[x];
         
-        if (t._id.equals(mongoose.Types.ObjectId(teamId))) { t.remove(); }
+        if (t._id.equals(ObjectId(teamId))) { t.remove(); }
       }
     }
 
@@ -221,10 +227,16 @@ leagueSchema.methods.moveTeam = function (teamId, index) {
   this.teams.splice(index, 0, _.cloneDeep(team.toObject()));
 
   this.teams.forEach((t, i) => {
-    if (t.equals(mongoose.Types.ObjectId(teamId)) && !t.isNew) {
+    if (t.equals(ObjectId(teamId)) && !t.isNew) {
       this.teams.splice(i, 1);
     }
   });
+}
+
+leagueSchema.methods.generateSchedule = function (options) {
+  matchmaker(this, options);
+
+  console.log(JSON.stringify(this.schedule, null, 4));
 }
 
 const Division = mongoose.model('Division', divisionSchema);
