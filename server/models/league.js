@@ -235,8 +235,6 @@ leagueSchema.methods.moveTeam = function (teamId, index) {
 
 leagueSchema.methods.generateSchedule = function (options) {
   matchmaker(this, options);
-
-  console.log(JSON.stringify(this.schedule, null, 4));
 }
 
 const Division = mongoose.model('Division', divisionSchema);
