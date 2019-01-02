@@ -31,7 +31,11 @@ const gameSchema = new mongoose.Schema({
       type: Number
     }
   },
-  start: Date
+  start: Date,
+  time: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const Game = mongoose.model('Game', gameSchema);

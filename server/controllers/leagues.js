@@ -3,6 +3,7 @@ const {ObjectID} = require('mongodb');
 
 const {League, Division} = require('../models/league');
 const {Team} = require('../models/team');
+const {Game} = require('../models/game');
 
 router.get('/', async (req, res) => {
   try {
@@ -281,6 +282,29 @@ router.delete('/:id/schedule', async (req, res) => {
   }
 });
 
+router.post('/:id/schedule/add', async (req, res) => {
+  const id = req.params.id;
+  const label = req.body.label;
+
+  if (!ObjectID.isValid(id)) { res.status(404).send(); }
+
+  try {
+    const league = await League.findById(id);
+    const group = {
+      _id: ObjectID(),
+      label,
+      games: []
+    };
+
+    league.schedule.push(group);
+
+    await league.save();
+    res.send(group);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
 router.put('/:id/schedule/:groupId', async (req, res) => {
   const {id, groupId} = req.params;
   const label = req.body.label;
@@ -311,6 +335,58 @@ router.delete('/:id/schedule/:groupId', async (req, res) => {
 
     await league.save();
     res.send(group);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
+router.post('/:id/schedule/:groupId/games', async (req, res) => {
+  const {id, groupId} = req.params;
+  const {home, away, start, time} = req.body;
+
+  if (!ObjectID.isValid(id) || !ObjectID.isValid(groupId)) { 
+    res.status(404).send(); 
+  }
+
+  try {
+    const league = await League.findById(id);
+    const group = league.schedule.id(groupId);
+    const game = new Game({
+      home,
+      away,
+      start,
+      time
+    });
+
+    group.games.push(game);
+    await league.save();
+    res.send(league.schedule);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
+router.put('/:id/schedule/:groupId/games/:gameId', async (req, res) => {
+  const {id, groupId, gameId} = req.params;
+  const {home, away, start, time} = req.body;
+
+  if (!ObjectID.isValid(id) || !ObjectID.isValid(groupId) || !ObjectID.isValid(gameId)) { 
+    res.status(404).send(); 
+  }
+
+  try {
+    const league = await League.findById(id);
+    const group = league.schedule.id(groupId);
+    const game = group.games.id(gameId);
+
+    // update data
+    game.home = home;
+    game.away = away;
+    game.start = start;
+    game.time = time;
+
+    await league.save();
+    res.send(league.schedule);
   } catch (e) {
     res.status(400).send(e);
   }

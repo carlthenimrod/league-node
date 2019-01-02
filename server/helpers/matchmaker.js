@@ -65,13 +65,13 @@ matchmaker = function (league, options) {
 labelMaker = function (league) {
   if (league.schedule.length > 0) {
     const last = league.schedule[league.schedule.length - 1].label;
-    const label = last.substr(0, last.indexOf(' '));
-    const num = parseInt(last.substr(last.indexOf(' ') + 1));
+    const label = last.substr(0, last.lastIndexOf(' '));
+    const num = parseInt(last.substr(last.lastIndexOf(' ') + 1));
 
-    if (typeof num === 'number') {
+    if ((typeof num === 'number') && !isNaN(num)) {
       return label + ' ' + (num + 1);
     } else {
-      return 'New Game Group 1'
+      return 'New Group 1'
     }
   } else {
     return 'Week 1';
