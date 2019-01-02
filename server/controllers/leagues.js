@@ -299,4 +299,21 @@ router.put('/:id/schedule/:groupId', async (req, res) => {
   }
 });
 
+router.delete('/:id/schedule/:groupId', async (req, res) => {
+  const {id, groupId} = req.params;
+
+  if (!ObjectID.isValid(id) || !ObjectID.isValid(groupId)) { res.status(404).send(); }
+
+  try {
+    const league = await League.findById(id);
+    const group = league.schedule.id(groupId);
+    group.remove();
+
+    await league.save();
+    res.send(group);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
 module.exports = router;
