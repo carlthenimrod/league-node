@@ -1,6 +1,82 @@
 const moment = require('moment');
+const _ = require('lodash');
 
 const {Game} = require('../models/game');
+
+matchmaker = function (league, options) {
+  if (options.strategy === 'week') {
+    let {total, per} = options;
+
+    if (+total && +per) {
+      const teams = createTeams(league);
+
+      while (total > 0) {
+        const label = labelMaker(league);
+        const games = createGames(league, teams, per);
+
+        league.schedule.push({ label, games });
+
+        --total;
+      }
+    } else {
+      throw new Error('Options Invalid');
+    }
+  } else if (options.strategy === 'date') {
+    let {start, end, days} = options;
+
+    if (start && end && days) {
+      start = moment(start);
+      end = moment(end);
+
+      if (!start.isValid() || !end.isValid()) {
+        throw new Error('Dates Invalid');
+      }
+
+      if (!(days instanceof Array) || days.length === 0) {
+        throw new Error('No Days included');
+      }
+      
+      const teams = createTeams(league);
+      const games = [];
+
+      while (start.isSameOrBefore(end)) {
+        const label = labelMaker(league);
+        const day = start.format('dddd');
+
+        // create single set of games if match
+        if (days.indexOf(day) > -1) {
+          games.push(...createGames(league, teams, 1, start));
+        }
+
+        // new week, add games, reset data
+        if (day === 'Sunday' && games.length > 0) {
+          league.schedule.push({ label, games });
+          games.length = 0;
+        }
+        
+        start.add(1, 'd');
+      }
+    } else {
+      throw new Error('Options Invalid');
+    }
+  }
+}
+
+labelMaker = function (league) {
+  if (league.schedule.length > 0) {
+    const last = league.schedule[league.schedule.length - 1].label;
+    const label = last.substr(0, last.indexOf(' '));
+    const num = parseInt(last.substr(last.indexOf(' ') + 1));
+
+    if (typeof num === 'number') {
+      return label + ' ' + (num + 1);
+    } else {
+      return 'New Game Group 1'
+    }
+  } else {
+    return 'Week 1';
+  }
+}
 
 shuffle = function (a) {
   for (let i = a.length - 1; i > 0; i--) {
@@ -54,15 +130,15 @@ createTeams = function (league) {
         const game = group.games[x];
         
         // add to totals
-        if (game.home._id.equals(t._id)) {
-          ++t.home;
-          ++t.total;
+        if (game.home._id.equals(team._id)) {
+          ++team.home;
+          ++team.total;
 
           const opponent = team.opponents.find(o => o._id.equals(game.away._id));
           ++opponent.timesPlayed;
-        } else if (game.away._id.equals(t._id)) {
-          ++t.away;
-          ++t.total;
+        } else if (game.away._id.equals(team._id)) {
+          ++team.away;
+          ++team.total;
 
           const opponent = team.opponents.find(o => o._id.equals(game.home._id));
           ++opponent.timesPlayed;
@@ -87,7 +163,7 @@ createGames = function (league, teams, set, date) {
       // if doesn't have game already
       if (team.set <= current) {
         const host = (team.home <= team.away) ? true : false;
-        const match = matchMake(teams, team, host);
+        const match = findOpponent(teams, team, host);
 
         if (!match) { 
           ++team.byes;
@@ -127,7 +203,11 @@ createGames = function (league, teams, set, date) {
         opponent.played.push(team._id);
         opponent.notPlayed.splice(opponent.notPlayed.indexOf(team._id), 1);
 
-        const game = new Game({ home, away });
+        const game = new Game({ 
+          home: _.pick(home, ['_id', 'name']), 
+          away: _.pick(away, ['_id', 'name']) 
+        });
+
         if (date) game.start = date;
         games.push(game);
       }
@@ -158,7 +238,7 @@ createGames = function (league, teams, set, date) {
   return games;
 }
 
-matchMake = function (teams, team, host) {
+findOpponent = function (teams, team, host) {
   let matches = [];
 
   // find potential matches
@@ -222,66 +302,4 @@ matchMake = function (teams, team, host) {
   return bestMatch._id;
 }
 
-module.exports = (league, options) => {
-  if (options.strategy === 'week') {
-    let {total, per} = options;
-
-    if (+total && +per) {
-      let i = 0;
-      const teams = createTeams(league);
-
-      while (total > 0) {
-        ++i
-        const label = `Week ${i}`;
-        const games = createGames(league, teams, per);
-
-        league.schedule.push({ label, games });
-
-        --total;
-      }
-    } else {
-      throw new Error('Options Invalid');
-    }
-  } else if (options.strategy === 'date') {
-    let {start, end, days} = options;
-
-    if (start && end && days) {
-      start = moment(start);
-      end = moment(end);
-
-      if (!start.isValid() || !end.isValid()) {
-        throw new Error('Dates Invalid');
-      }
-
-      if (!(days instanceof Array) || days.length === 0) {
-        throw new Error('No Days included');
-      }
-      
-      let i = 1;
-      let label = `Week ${i}`;
-      const teams = createTeams(league);
-      const games = [];
-
-      while (start.isSameOrBefore(end)) {
-        const day = start.format('dddd');
-
-        // create single set of games if match
-        if (days.indexOf(day) > -1) {
-          games.push(...createGames(league, teams, 1, start));
-        }
-
-        // new week, add games, reset data
-        if (day === 'Sunday' && games.length > 0) {
-          league.schedule.push({ label, games });
-
-          ++i;
-          games.length = 0;
-        }
-        
-        start.add(1, 'd');
-      }
-    } else {
-      throw new Error('Options Invalid');
-    }
-  }
-};
+module.exports = matchmaker;

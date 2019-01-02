@@ -257,8 +257,25 @@ router.post('/:id/schedule', async (req, res) => {
     const league = await League.findById(id);
     league.generateSchedule(options);
 
-    // await league.save();
+    await league.save();
     res.send(league.schedule);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
+router.delete('/:id/schedule', async (req, res) => {
+  const id = req.params.id;
+  const options = {...req.body};
+
+  if (!ObjectID.isValid(id)) { res.status(404).send(); }
+
+  try {
+    const league = await League.findById(id);
+    league.schedule = [];
+
+    await league.save();
+    res.send();
   } catch (e) {
     res.status(400).send(e);
   }
