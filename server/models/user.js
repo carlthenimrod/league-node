@@ -2,8 +2,10 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 
 const config = require('../config/config');
+const mailer = require('../config/email');
 const {Notice} = require('./notice');
 
 const userSchema = new mongoose.Schema({
@@ -26,6 +28,7 @@ const userSchema = new mongoose.Schema({
     trim: true,
     select: false
   },
+  recovery: {type: String, select: false},
   status: {
     type: String,
     enum: ['new', 'active', 'inactive', 'banned'],
@@ -36,10 +39,53 @@ const userSchema = new mongoose.Schema({
     }
   },
   tokens: {
-    type: [{ token: String }],
+    type: [{ 
+      _id: false, 
+      client: String,
+      token: String, 
+      type: {type: String} 
+    }],
     select: false
-  }
+  },
+  address: {
+    street: {type: String, trim: true},
+    city: {type: String, trim: true},
+    state: {type: String, trim: true},
+    postal: {type: String, trim: true}
+  },
+  phone: {type: String, trim: true},
+  secondary: {type: String, trim: true},
+  emergency: {
+    name: {type: String, trim: true},
+    phone: {type: String, trim: true},
+    secondary: {type: String, trim: true}
+  },
+  comments: {type: String, trim: true}
 });
+
+var createRecoveryPassword = async function () {
+  if (this.isNew && !this.password) {
+    // create code
+    const code = crypto.randomBytes(5).toString('hex');
+    
+    // add to tokens
+    this.tokens.push({ 
+      token: code, 
+      type: 'confirm' 
+    });
+
+    if (this.email) { // send temporary password
+      const link = `http://localhost:4200/register/${this._id}?code=${code}`;
+
+      mailer.send('user/confirm', this.email, {
+        name: this.name, 
+        link
+      });
+    }
+  }
+}
+
+userSchema.pre('save', createRecoveryPassword);
 
 userSchema.pre('save', function (next) {
   if (this.isModified('password')) {
@@ -70,13 +116,19 @@ userSchema.pre('save', async function () {
 
 userSchema.statics.findByCredentials = async function (email, password) {
   const user = await this.findOne({email});
-  if (!user) throw new Error('User not found.');
+  if (!user) {
+    const err =  new Error('Email not found.');
+    err.status = '404';
+    throw err;
+  }
 
   const match = await bcrypt.compare(password, user.password);
   if (match) {
     return user;
   } else {
-    throw new Error('Password incorrect.');
+    const err =  new Error('Password is incorrect.');
+    err.status = '401';
+    throw err;
   }
 };
 
@@ -85,8 +137,9 @@ userSchema.statics.refreshToken = async function (client, refresh_token) {
   if (decoded.client !== client) throw new Error();
 
   const user = await this.findOne({
-    'tokens._id': client, 
-    'tokens.token': refresh_token
+    'tokens.client': client, 
+    'tokens.token': refresh_token,
+    'tokens.type': 'access'
   });
   if (!user) throw new Error();
 
@@ -103,21 +156,36 @@ userSchema.statics.refreshToken = async function (client, refresh_token) {
 
 userSchema.statics.removeToken = async function (client, refresh_token) {
   const user = await this.findOne({
-    'tokens._id': client,
+    'tokens.client': client,
     'tokens.token': refresh_token
   });
 
   if (!user) return;
 
-  user.tokens.id(client).remove();
-  await user.save();
+  // user.tokens.id(client).remove();
+  // await user.save();
+};
+
+userSchema.methods.confirmEmail = function (code) {
+  const tokens = this.tokens;
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i].toObject();
+
+    if ((token.type === 'confirm') && (token.token === code)) {
+      return true;
+    }
+  }
+
+  const err = new Error('Code invalid');
+  err.status = '400';
+  throw err;
 };
 
 userSchema.methods.generateTokens = async function () {
   const access_token = jwt.sign({
     _id: this._id,
-    email: this.email,
-    roles: this.roles
+    email: this.email
   }, config.accessToken.secret, {
     expiresIn: config.accessToken.expiresIn
   });
@@ -129,7 +197,7 @@ userSchema.methods.generateTokens = async function () {
   });
 
   this.tokens.push({
-    _id: client, 
+    client, 
     token: refresh_token
   });
 
