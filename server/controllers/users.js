@@ -158,8 +158,6 @@ router.post('/:id/password', async (req, res, next) => {
         ...tokens
       });
     }
-
-    res.send();
   } catch (e) {
     next(e);
   }

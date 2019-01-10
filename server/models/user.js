@@ -115,7 +115,7 @@ userSchema.pre('save', async function () {
 });
 
 userSchema.statics.findByCredentials = async function (email, password) {
-  const user = await this.findOne({email});
+  const user = await this.findOne({email}, '+password +tokens');
   if (!user) {
     const err =  new Error('Email not found.');
     err.status = '404';

@@ -19,8 +19,6 @@ router.post('/login', async (req, res, next) => {
       email: user.email,
       ...tokens
     });
-
-    res.send(tokens);
   } catch (e) {
     next(e);
   }
