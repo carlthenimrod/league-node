@@ -47,6 +47,7 @@ const mailer = {
           preview: {
             app: 'chrome'
           },
+          send: false,
           transport: transporter,
           views: {
             options: {
