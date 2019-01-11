@@ -44,6 +44,9 @@ const mailer = {
           message: {
             from: options.from || config.email.default
           },
+          preview: {
+            app: 'chrome'
+          },
           transport: transporter,
           views: {
             options: {
