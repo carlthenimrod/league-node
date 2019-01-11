@@ -44,6 +44,7 @@ const mailer = {
           message: {
             from: options.from || config.email.default
           },
+          send: true,
           transport: transporter,
           views: {
             options: {
