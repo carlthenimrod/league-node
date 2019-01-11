@@ -36,7 +36,7 @@ const getTransporter = async () => {
 const mailer = {
   send: async (template, options, data = {}) => {
     const transporter = await getTransporter(),
-          to = (typeof options === 'string') ? options : options.to
+          to = (typeof options === 'string') ? options : options.to;
 
     if (transporter) {
       try {

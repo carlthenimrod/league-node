@@ -16,6 +16,7 @@ const config = {
     port: process.env.EMAIL_PORT || false,
     user: process.env.EMAIL_USER || false,
     pass: process.env.EMAIL_PASSWORD || false,
+    secure: process.env.EMAIL_SECURE || false,
     default: process.env.EMAIL_FROM_DEFAULT || false
   }
 };
