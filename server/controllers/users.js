@@ -102,8 +102,6 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-
-
 router.post('/:id/confirm', async (req, res, next) => {
   const id = req.params.id;
   const code = req.body.code;
@@ -158,6 +156,24 @@ router.post('/:id/password', async (req, res, next) => {
         ...tokens
       });
     }
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post('/email', async (req, res, next) => {
+  const email = req.body.email;
+
+  try {
+    const user = await User.findOne({email});
+
+    if (user) {
+      const err = new Error('Email Taken.');
+      err.status = 409;
+      throw err;
+    } 
+    
+    res.send();
   } catch (e) {
     next(e);
   }
