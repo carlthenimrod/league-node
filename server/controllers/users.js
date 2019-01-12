@@ -32,7 +32,6 @@ router.post('/', async (req, res, next) => {
   const {
     name, 
     email, 
-    password, 
     address, 
     phone, 
     secondary, 
@@ -42,7 +41,6 @@ router.post('/', async (req, res, next) => {
   const user = new User({
     name,
     email,
-    password,
     address, 
     phone, 
     secondary, 
@@ -60,22 +58,35 @@ router.post('/', async (req, res, next) => {
 
 router.put('/:id', async (req, res) => {
   const id = req.params.id;
-  
-  if (!ObjectID.isValid(id)) {
-    return res.status(404).send();
-  }
+  const {
+    name, 
+    password, 
+    address, 
+    phone, 
+    secondary, 
+    emergency, 
+    comments } = req.body;
 
   try {
-    const {name, status} = req.body;
+    if (!ObjectID.isValid(id)) {
+      const err = new Error('ID not found.');
+      err.status = 404;
+      throw err;
+    }
 
-    const user = await User.findById(id);
-    user.name = name;
-    user.status = status;
-    await user.save();
+    const user = await User.findByIdAndUpdate(id, {
+      name, 
+      password, 
+      address, 
+      phone, 
+      secondary, 
+      emergency, 
+      comments 
+    }, { new: true });
 
     res.send(user);
   } catch (e) {
-    res.status(400).send(e);
+    next(e);
   }
 });
 
