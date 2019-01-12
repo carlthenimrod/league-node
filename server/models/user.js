@@ -10,9 +10,8 @@ const {Notice} = require('./notice');
 
 const userSchema = new mongoose.Schema({
   name: {
-    type: String,
-    required: true,
-    trim: true
+    first: {type: String, trim: true, required: true},
+    last: {type: String, trim: true, required: true}
   },
   email: {
     type: String,
@@ -56,12 +55,45 @@ const userSchema = new mongoose.Schema({
   phone: {type: String, trim: true},
   secondary: {type: String, trim: true},
   emergency: {
-    name: {type: String, trim: true},
+    name: {
+      first: {type: String, trim: true, required: true},
+      last: {type: String, trim: true, required: true}
+    },
     phone: {type: String, trim: true},
     secondary: {type: String, trim: true}
   },
   comments: {type: String, trim: true}
+}, { 
+  toJSON: {
+    virtuals: true
+  } 
 });
+
+userSchema.virtual('fullName').get(function() {
+  return getFullName(this.name);
+});
+
+userSchema.virtual('emergency.fullName').get(function() {
+  return getFullName(this.emergency.name);
+});
+
+var getFullName = function(name) {
+  let fullName;
+
+  if (name.first) {
+    fullName = name.first;
+  }
+
+  if (name.last) {
+    if (fullName.length > 0) {
+      fullName += (' ' + name.last);
+    } else {
+      fullName = name.last;
+    }
+  }
+
+  if (fullName) { return fullName; }
+};
 
 var createRecoveryPassword = async function () {
   if (this.isNew && !this.password) {
@@ -78,7 +110,7 @@ var createRecoveryPassword = async function () {
       const link = `http://localhost:4200/register/${this._id}?code=${code}`;
 
       mailer.send('user/confirm', this.email, {
-        name: this.name, 
+        name: this.fullName, 
         link
       });
     }
