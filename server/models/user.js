@@ -148,6 +148,7 @@ userSchema.pre('save', async function () {
 
 userSchema.statics.findByCredentials = async function (email, password) {
   const user = await this.findOne({email}, '+password +tokens');
+
   if (!user) {
     const err =  new Error('Email not found.');
     err.status = '404';
@@ -177,8 +178,7 @@ userSchema.statics.refreshToken = async function (client, refresh_token) {
 
   const access_token = jwt.sign({
     _id: this._id,
-    email: this.email,
-    roles: this.roles
+    email: this.email
   }, config.accessToken.secret, {
     expiresIn: config.accessToken.expiresIn
   });
@@ -214,6 +214,16 @@ userSchema.methods.confirmEmail = function (code) {
   throw err;
 };
 
+userSchema.methods.verifyPassword = async function (password) {
+  const match = await bcrypt.compare(password, this.password);
+
+  if (!match) {
+    const err =  new Error('Password is incorrect.');
+    err.status = '401';
+    throw err;
+  }
+};
+
 userSchema.methods.generateTokens = async function () {
   const access_token = jwt.sign({
     _id: this._id,
@@ -232,6 +242,11 @@ userSchema.methods.generateTokens = async function () {
     client, 
     token: refresh_token
   });
+
+  // only keep 5 latest tokens
+  while (this.tokens.length > 5) {
+    this.tokens.shift();
+  }
 
   await this.save();
 

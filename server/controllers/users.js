@@ -159,6 +159,7 @@ router.post('/:id/password', async (req, res, next) => {
 
     if (user.confirmEmail(code)) {
       user.password = password;
+      user.tokens = [];
       const tokens = await user.generateTokens();
       
       res.send({
@@ -167,6 +168,35 @@ router.post('/:id/password', async (req, res, next) => {
         ...tokens
       });
     }
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.put('/:id/password', async (req, res, next) => {
+  const id = req.params.id;
+  const {old, password} = req.body;
+
+  try {
+    if (!ObjectID.isValid(id)) {
+      const err = new Error('Invalid ID.');
+      err.status = '404';
+      throw err;
+    }
+
+    const user = await User.findById(id, '+password');
+
+    if (!user) {
+      const err = new Error('User not found.');
+      err.status = '404';
+      throw err;
+    };
+
+    await user.verifyPassword(old);
+    user.password = password;
+    await user.save();
+
+    res.send();
   } catch (e) {
     next(e);
   }
