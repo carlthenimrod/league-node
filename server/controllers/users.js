@@ -60,7 +60,6 @@ router.put('/:id', async (req, res) => {
   const id = req.params.id;
   const {
     name, 
-    password, 
     address, 
     phone, 
     secondary, 
@@ -76,7 +75,6 @@ router.put('/:id', async (req, res) => {
 
     const user = await User.findByIdAndUpdate(id, {
       name, 
-      password, 
       address, 
       phone, 
       secondary, 
@@ -213,6 +211,27 @@ router.post('/email', async (req, res, next) => {
       err.status = 409;
       throw err;
     } 
+    
+    res.send();
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post('/recover', async (req, res, next) => {
+  const email = req.body.email;
+
+  try {
+    const user = await User.findOne({email}, '+tokens');
+
+    if (!user) {
+      const err = new Error('User not found.');
+      err.status = 404;
+      throw err;
+    }
+
+    user.recoverPassword();
+    await user.save();
     
     res.send();
   } catch (e) {

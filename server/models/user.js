@@ -95,19 +95,17 @@ var getFullName = function(name) {
   if (fullName) { return fullName; }
 };
 
-var createRecoveryPassword = async function () {
+var createConfirmationToken = async function () {
   if (this.isNew && !this.password) {
-    // create code
     const code = crypto.randomBytes(5).toString('hex');
     
-    // add to tokens
     this.tokens.push({ 
       token: code, 
       type: 'confirm' 
     });
 
-    if (this.email) { // send temporary password
-      const link = `http://localhost:4200/register/${this._id}?code=${code}`;
+    if (this.email) {
+      const link = `http://localhost:4200/confirm/${this._id}?code=${code}`;
 
       mailer.send('user/confirm', this.email, {
         name: this.fullName, 
@@ -117,7 +115,7 @@ var createRecoveryPassword = async function () {
   }
 }
 
-userSchema.pre('save', createRecoveryPassword);
+userSchema.pre('save', createConfirmationToken);
 
 userSchema.pre('save', function (next) {
   if (this.isModified('password')) {
@@ -243,7 +241,6 @@ userSchema.methods.generateTokens = async function () {
     token: refresh_token
   });
 
-  // only keep 5 latest tokens
   while (this.tokens.length > 5) {
     this.tokens.shift();
   }
@@ -252,6 +249,24 @@ userSchema.methods.generateTokens = async function () {
 
   return {access_token, refresh_token, client};
 };
+
+userSchema.methods.recoverPassword = async function() {
+  const code = crypto.randomBytes(5).toString('hex');
+  
+  this.tokens.push({ 
+    token: code, 
+    type: 'confirm' 
+  });
+
+  if (this.email) { // send temporary password
+    const link = `http://localhost:4200/confirm/${this._id}?code=${code}`;
+
+    mailer.send('user/recover', this.email, {
+      name: this.fullName, 
+      link
+    });
+  }
+}
 
 const User = mongoose.model('User', userSchema);
 
