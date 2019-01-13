@@ -185,15 +185,12 @@ userSchema.statics.refreshToken = async function (client, refresh_token) {
 };
 
 userSchema.statics.removeToken = async function (client, refresh_token) {
-  const user = await this.findOne({
+  await this.updateOne({
     'tokens.client': client,
     'tokens.token': refresh_token
+  }, {
+    $pull: { tokens: { client, token: refresh_token } }
   });
-
-  if (!user) return;
-
-  // user.tokens.id(client).remove();
-  // await user.save();
 };
 
 userSchema.methods.confirmEmail = function (code) {

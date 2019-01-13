@@ -38,7 +38,7 @@ router.delete('/logout', async (req, res) => {
     await User.removeToken(req.body.client, req.body.refresh_token);
     res.send();
   } catch (e) {
-    res.status(400).send();
+    next(e);
   }
 });
 
