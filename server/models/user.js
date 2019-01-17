@@ -37,6 +37,11 @@ const userSchema = new mongoose.Schema({
       return status;
     }
   },
+  img: String,
+  verified: {
+    type: Boolean,
+    default: false
+  },
   tokens: {
     type: [{ 
       _id: false, 
@@ -56,8 +61,8 @@ const userSchema = new mongoose.Schema({
   secondary: {type: String, trim: true},
   emergency: {
     name: {
-      first: {type: String, trim: true, required: true},
-      last: {type: String, trim: true, required: true}
+      first: {type: String, trim: true},
+      last: {type: String, trim: true}
     },
     phone: {type: String, trim: true},
     secondary: {type: String, trim: true}
@@ -77,7 +82,7 @@ userSchema.virtual('emergency.fullName').get(function() {
   return getFullName(this.emergency.name);
 });
 
-var getFullName = function(name) {
+const getFullName = function(name) {
   let fullName;
 
   if (name.first) {
@@ -95,7 +100,13 @@ var getFullName = function(name) {
   if (fullName) { return fullName; }
 };
 
-var createConfirmationToken = async function () {
+const hashPassword = async function() {
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
+};
+
+const createConfirmationToken = async function () {
   if (this.isNew && !this.password) {
     const code = crypto.randomBytes(5).toString('hex');
     
@@ -115,20 +126,35 @@ var createConfirmationToken = async function () {
   }
 }
 
-userSchema.pre('save', createConfirmationToken);
+const checkVerification = function (next) {
+  if (this.isNew || this.verified) return next();
 
-userSchema.pre('save', function (next) {
-  if (this.isModified('password')) {
-    bcrypt.hash(this.password, 10, (err, hash) => {
-      this.password = hash;
-      next();
-    });
-  } else {
-    next();
-  }
-});
+  // check name
+  if (!this.get('name')) return next();
+  if (!this.name.first) return next();
+  if (!this.name.last) return next();
+  if (!this.phone) return next();
 
-userSchema.pre('save', async function () {
+  // check address
+  if (!this.get('address')) return next();
+  if (!this.address.street) return next();
+  if (!this.address.city) return next();
+  if (!this.address.state) return next();
+  if (!this.address.postal) return next();
+
+  // check emergency contact
+  if (!this.get('emergency')) return next();
+  if (!this.emergency.phone) return next();
+  if (!this.get('emergency.name')) return next();
+  if (!this.emergency.name.first) return next();
+  if (!this.emergency.name.last) return next();
+
+  // verified!
+  this.verified = true;
+  next();
+}
+
+const handleNotices = async function() {
   if (this.isNew && this.status === 'new') {
     await Notice.create({
       notice: 'new',
@@ -142,7 +168,12 @@ userSchema.pre('save', async function () {
       await Notice.findOneAndRemove({ item: this._id, notice: 'new' });
     }
   }
-});
+};
+
+userSchema.pre('save', hashPassword);
+userSchema.pre('save', createConfirmationToken);
+userSchema.pre('save', checkVerification);
+userSchema.pre('save', handleNotices);
 
 userSchema.statics.findByCredentials = async function (email, password) {
   const user = await this.findOne({email}, '+password +tokens');

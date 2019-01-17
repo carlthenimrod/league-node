@@ -59,9 +59,9 @@ const mailer = {
           locals: {...data}
         });
 
-        if (send) { console.log(send); }
+        // if (send) { console.log(send); }
       } catch (e) {
-        return console.log(e);
+        // return console.log(e);
       }
     }
   }

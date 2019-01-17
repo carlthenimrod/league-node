@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const {ObjectID} = require('mongodb');
 
+const upload = require('../middleware/upload');
 const {User} = require('../models/user');
 const {Team} = require('../models/team');
 
@@ -56,10 +57,11 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', async (req, res, next) => {
   const id = req.params.id;
   const {
     name, 
+    status,
     address, 
     phone, 
     secondary, 
@@ -73,15 +75,16 @@ router.put('/:id', async (req, res) => {
       throw err;
     }
 
-    const user = await User.findByIdAndUpdate(id, {
-      name, 
-      address, 
-      phone, 
-      secondary, 
-      emergency, 
-      comments 
-    }, { new: true });
+    const user = await User.findById(id);
+    user.name = name;
+    user.status = status;
+    user.address = address;
+    user.phone = phone;
+    user.secondary = secondary;
+    user.emergency = emergency;
+    user.comments = comments;
 
+    await user.save();
     res.send(user);
   } catch (e) {
     next(e);
@@ -234,6 +237,39 @@ router.post('/recover', async (req, res, next) => {
     await user.save();
     
     res.send();
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post('/:id/img', upload, async (req, res, next) => {
+  const id = req.params.id;
+  const url = req.protocol + '://' + req.get('host');
+
+  try {
+    if (!ObjectID.isValid(id)) {
+      const err = new Error('Invalid ID.');
+      err.status = '404';
+      throw err;
+    }
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      const err = new Error('User not found.');
+      err.status = 404;
+      throw err;
+    }
+
+    console.log(req.file);
+
+    const path = `${url}/public/users/${id}/${req.file.fileName}`;
+
+    user.img = path;
+
+    await user.save();
+    
+    res.send(user);
   } catch (e) {
     next(e);
   }
