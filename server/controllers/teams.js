@@ -1,13 +1,15 @@
 const router = require('express').Router();
+const expressWs = require('express-ws')(router);
 const {ObjectID} = require('mongodb');
 
+const userStore = require('../stores/user-store');
 const {League, Division} = require('../models/league');
 const {Team} = require('../models/team');
 const {User} = require('../models/user');
 
 router.get('/', async (req, res) => {
   try {
-    const teams = await Team.find().populate('roster.user');;
+    const teams = await Team.find().populate('roster.user');
     res.send(teams);
   } catch (e) {
     res.status(400).send(e);
@@ -260,6 +262,18 @@ router.delete('/:id/users/:userId', async (req, res) => {
   } catch (e) {
     return res.status(400).send(e);
   }
+});
+
+router.ws('/:id', function(ws, req) {
+  userStore.add();
+
+  ws.on('message', function(msg) {
+    ws.send(msg);
+  });
+
+  ws.on('close', (code, reason) => {
+    userStore.remove();
+  });
 });
 
 module.exports = router;

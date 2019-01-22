@@ -1,4 +1,5 @@
 const express = require('express');
+const expressWs = require('express-ws');
 const cors = require('cors');
 const path = require('path');
 
@@ -8,6 +9,7 @@ const router = require('./config/router');
 require('./config/db');
 
 const app = express();
+expressWs(app);
 
 app.use(cors());
 app.use(express.json());
