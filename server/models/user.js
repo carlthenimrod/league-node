@@ -27,7 +27,6 @@ const userSchema = new mongoose.Schema({
     trim: true,
     select: false
   },
-  recovery: {type: String, select: false},
   status: {
     type: String,
     enum: ['new', 'active', 'inactive', 'banned'],
@@ -42,6 +41,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  teams: [{ name: String }],
   tokens: {
     type: [{ 
       _id: false, 
@@ -295,6 +295,31 @@ userSchema.methods.recoverPassword = async function() {
     });
   }
 }
+
+userSchema.methods.addTeam = function (team) {
+  const user = this;
+  
+  for (let i = 0; i < user.teams.length; i++) {
+    const t = user.teams[i];
+    
+    if (t._id.equals(team._id)) { user.teams.splice(i, 1); }
+  }
+
+  user.teams.push({
+    _id: team._id,
+    name: team.name
+  });
+};
+
+userSchema.methods.removeTeam = function (teamId) {
+  const user = this;
+  
+  for (let i = 0; i < user.teams.length; i++) {
+    const t = user.teams[i];
+    
+    if (t._id.equals(teamId)) { user.teams.splice(i, 1); }
+  }
+};
 
 const User = mongoose.model('User', userSchema);
 

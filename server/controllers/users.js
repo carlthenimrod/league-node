@@ -261,8 +261,6 @@ router.post('/:id/img', upload, async (req, res, next) => {
       throw err;
     }
 
-    console.log(req.file);
-
     const path = `${url}/public/users/${id}/${req.file.fileName}`;
 
     user.img = path;

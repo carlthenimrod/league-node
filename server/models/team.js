@@ -23,7 +23,7 @@ const teamSchema = new mongoose.Schema({
   }]
 });
 
-teamSchema.pre('save', async function () {
+const handleNotices = async function () {
   if (this.isNew && this.status === 'new') {
     await Notice.create({
       notice: 'new',
@@ -37,7 +37,9 @@ teamSchema.pre('save', async function () {
       await Notice.findOneAndRemove({ item: this._id, notice: 'new' });
     }
   }
-});
+};
+
+teamSchema.pre('save', handleNotices);
 
 const Team = mongoose.model('Team', teamSchema);
 

@@ -171,24 +171,34 @@ router.post('/:id/users', async (req, res) => {
   } = req.body;
   let user;
 
-  if (!ObjectID.isValid(id)) { return res.status(404).send(); }
-
   try {
+    if (!ObjectID.isValid(id)) {
+      const err = new Error('ID not found.');
+      err.status = 404;
+      throw err;
+    }
+
     // check if user exists already
     if (userId) {
       user = await User.findById(userId);
-      if (!user) { res.status(404).send(); }
+      if (!user) {
+        const err = new Error('User not found.');
+        err.status = 404;
+        throw err;
+      }
     } else { // create new
       user = new User({name});
     }
 
-    // find team
     const team = await Team.findById(id).populate('roster.user');
-    if (!team) { res.status(404).send(); }
+    if (!team) {
+      const err = new Error('Team not found.');
+      err.status = 404;
+      throw err;
+    }
 
-    // save new user, if new
+    // remove user if exists already
     if (userId) { 
-      // remove user if exists
       for (let i = 0; i < team.roster.length; i++) {5
         const u = team.roster[i].user;
 
@@ -196,9 +206,10 @@ router.post('/:id/users', async (req, res) => {
           team.roster.splice(i, 1); 
         }
       }
-    } else {
-      await user.save();
     }
+
+    user.addTeam(team);
+    await user.save();
 
     team.roster.push({user, roles});
 
@@ -206,7 +217,7 @@ router.post('/:id/users', async (req, res) => {
 
     res.send(team);
   } catch (e) {
-    return res.status(400).send(e);
+    next(e);
   }
 });
 
@@ -214,13 +225,20 @@ router.put('/:id/users/:userId', async (req, res) => {
   const {id, userId} = req.params;
   const {roles} = req.body;
 
-  if (!ObjectID.isValid(id)) { return res.status(404).send(); }
-  if (!ObjectID.isValid(userId)) { return res.status(404).send(); }
-
   try {
+    if (!ObjectID.isValid(id) || !ObjectID.isValid(userId)) {
+      const err = new Error('ID not found.');
+      err.status = 404;
+      throw err;
+    }
+
     // find team
     const team = await Team.findById(id).populate('roster.user');
-    if (!team) { res.status(404).send(); }
+    if (!team) {
+      const err = new Error('Team not found.');
+      err.status = 404;
+      throw err;
+    }
     
     for (let i = 0; i < team.roster.length; i++) {
       const u = team.roster[i].user;
@@ -234,19 +252,33 @@ router.put('/:id/users/:userId', async (req, res) => {
 
     res.send(team);
   } catch (e) {
-    return res.status(400).send(e);
+    next(e);
   }
 });
 
 router.delete('/:id/users/:userId', async (req, res) => {
   const {id, userId} = req.params;
 
-  if (!ObjectID.isValid(id)) { return res.status(404).send(); }
-  if (!ObjectID.isValid(userId)) { return res.status(404).send(); }
-
   try {
+    if (!ObjectID.isValid(id) || !ObjectID.isValid(userId)) {
+      const err = new Error('ID not found.');
+      err.status = 404;
+      throw err;
+    }
+
     const team = await Team.findById(id).populate('roster.user');
-    if (!team) { res.status(404).send(); }
+    if (!team) {
+      const err = new Error('Team not found.');
+      err.status = 404;
+      throw err;
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      const err = new Error('User not found.');
+      err.status = 404;
+      throw err;
+    }
     
     for (let i = 0; i < team.roster.length; i++) {5
       const u = team.roster[i].user;
@@ -256,24 +288,18 @@ router.delete('/:id/users/:userId', async (req, res) => {
       }
     }
 
+    user.removeTeam(team._id);
+    await user.save();
+
     await team.save();
 
     res.send(team);
   } catch (e) {
-    return res.status(400).send(e);
+    next(e);
   }
 });
 
 router.ws('/:id', function(ws, req) {
-  userStore.add();
-
-  ws.on('message', function(msg) {
-    ws.send(msg);
-  });
-
-  ws.on('close', (code, reason) => {
-    userStore.remove();
-  });
 });
 
 module.exports = router;

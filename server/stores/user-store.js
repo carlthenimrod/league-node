@@ -1,11 +1,11 @@
 const userStore = (function() {
   const users = {};
 
-  const add = () => {
-
+  const add = (connection) => {
+    
   };
 
-  const remove = () => {
+  const remove = (connection) => {
 
   };
   
