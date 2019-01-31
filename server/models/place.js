@@ -12,6 +12,8 @@ const placeSchema = new mongoose.Schema({
     state: {type: String, trim: true},
     postal: {type: String, trim: true}
   },
+  locations: [{ name: String }],
+  permits: [{ name: String }]
 });
 
 const Place = mongoose.model('Place', placeSchema);
