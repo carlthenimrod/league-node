@@ -181,4 +181,92 @@ router.delete('/:id/locations/:locationId', async (req, res) => {
   }
 });
 
+router.post('/:id/permits', async (req, res) => {
+  const id = req.params.id;
+  const {label} = req.body;
+
+  try {
+    if (!ObjectID.isValid(id)) {
+      const err = new Error('Invalid ID');
+      err.status = 404;
+      throw err;
+    }
+
+    const place = await Place.findById(id);
+
+    if (!place) {
+      const err = new Error('Place not found');
+      err.status = 404;
+      throw err;
+    }
+
+    place.permits.push({ label });
+    await place.save();
+    res.send(place);
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.put('/:id/permits/:permitId', async (req, res) => {
+  const {id, permitId} = req.params;
+  const {label} = req.body;
+
+  try {
+    if (!ObjectID.isValid(id) || !ObjectID.isValid(permitId)) {
+      const err = new Error('Invalid ID');
+      err.status = 404;
+      throw err;
+    }
+
+    const place = await Place.findById(id);
+
+    if (!place) {
+      const err = new Error('Place not found');
+      err.status = 404;
+      throw err;
+    }
+
+    const permit = place.permits.id(permitId);
+
+    if (!permit) {
+      const err = new Error('Permit not found');
+      err.status = 404;
+      throw err;
+    }
+
+    permit.label = label;
+    await place.save();
+    res.send(place);
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.delete('/:id/permits/:permitId', async (req, res) => {
+  const {id, permitId} = req.params;
+
+  try {
+    if (!ObjectID.isValid(id) || !ObjectID.isValid(permitId)) {
+      const err = new Error('Invalid ID');
+      err.status = 404;
+      throw err;
+    }
+
+    const place = await Place.findById(id);
+
+    if (!place) {
+      const err = new Error('Place not found');
+      err.status = 404;
+      throw err;
+    }
+
+    place.permits.id(permitId).remove();
+    await place.save();
+    res.send();
+  } catch (e) {
+    next(e);
+  }
+});
+
 module.exports = router;

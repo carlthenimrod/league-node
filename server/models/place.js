@@ -13,7 +13,7 @@ const placeSchema = new mongoose.Schema({
     postal: {type: String, trim: true}
   },
   locations: [{ name: String }],
-  permits: [{ name: String }]
+  permits: [{ label: String }]
 });
 
 const Place = mongoose.model('Place', placeSchema);
