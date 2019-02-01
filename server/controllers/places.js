@@ -183,7 +183,7 @@ router.delete('/:id/locations/:locationId', async (req, res) => {
 
 router.post('/:id/permits', async (req, res) => {
   const id = req.params.id;
-  const {label} = req.body;
+  const {label, slots} = req.body;
 
   try {
     if (!ObjectID.isValid(id)) {
@@ -200,7 +200,7 @@ router.post('/:id/permits', async (req, res) => {
       throw err;
     }
 
-    place.permits.push({ label });
+    place.permits.push({ label, slots });
     await place.save();
     res.send(place);
   } catch (e) {
@@ -210,7 +210,7 @@ router.post('/:id/permits', async (req, res) => {
 
 router.put('/:id/permits/:permitId', async (req, res) => {
   const {id, permitId} = req.params;
-  const {label} = req.body;
+  const {label, slots} = req.body;
 
   try {
     if (!ObjectID.isValid(id) || !ObjectID.isValid(permitId)) {
@@ -236,6 +236,7 @@ router.put('/:id/permits/:permitId', async (req, res) => {
     }
 
     permit.label = label;
+    permit.slots = slots;
     await place.save();
     res.send(place);
   } catch (e) {
