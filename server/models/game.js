@@ -35,6 +35,22 @@ const gameSchema = new mongoose.Schema({
   time: {
     type: Boolean,
     default: false
+  },
+  place: {
+    _id: {
+      type: mongoose.Types.ObjectId
+    },
+    name: {
+      type: String,
+      trim: true
+    },
+    address: {
+      street: {type: String, trim: true},
+      city: {type: String, trim: true},
+      state: {type: String, trim: true},
+      postal: {type: String, trim: true}
+    },
+    locations: [{ name: String }]
   }
 });
 

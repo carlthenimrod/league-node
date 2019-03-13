@@ -18,14 +18,16 @@ router.get('/:id', async (req, res) => {
   const id = req.params.id;
   
   if (!ObjectID.isValid(id)) {
-    return res.status(404).send();
+    const err = new Error('Invalid ID');
+    err.status = 404;
+    throw err;
   }
 
   try {
     const league = await League.findById(id);
     res.send(league);
   } catch (e) {
-    res.status(400).send(e);
+    next(e);
   }
 });
 
@@ -340,12 +342,14 @@ router.delete('/:id/schedule/:groupId', async (req, res) => {
   }
 });
 
-router.post('/:id/schedule/:groupId/games', async (req, res) => {
+router.post('/:id/schedule/:groupId/games', async (req, res, next) => {
   const {id, groupId} = req.params;
-  const {home, away, start, time} = req.body;
+  const {home, away, start, time, place} = req.body;
 
   if (!ObjectID.isValid(id) || !ObjectID.isValid(groupId)) { 
-    res.status(404).send(); 
+    const err = new Error('Invalid ID');
+    err.status = 404;
+    throw err;
   }
 
   try {
@@ -355,23 +359,26 @@ router.post('/:id/schedule/:groupId/games', async (req, res) => {
       home,
       away,
       start,
-      time
+      time,
+      place
     });
 
     group.games.push(game);
     await league.save();
     res.send(league.schedule);
   } catch (e) {
-    res.status(400).send(e);
+    next(e);
   }
 });
 
-router.put('/:id/schedule/:groupId/games/:gameId', async (req, res) => {
+router.put('/:id/schedule/:groupId/games/:gameId', async (req, res, next) => {
   const {id, groupId, gameId} = req.params;
-  const {home, away, start, time} = req.body;
+  const {home, away, start, time, place} = req.body;
 
   if (!ObjectID.isValid(id) || !ObjectID.isValid(groupId) || !ObjectID.isValid(gameId)) { 
-    res.status(404).send(); 
+    const err = new Error('Invalid ID');
+    err.status = 404;
+    throw err;
   }
 
   try {
@@ -384,11 +391,12 @@ router.put('/:id/schedule/:groupId/games/:gameId', async (req, res) => {
     game.away = away;
     game.start = start;
     game.time = time;
+    game.place = place;
 
     await league.save();
     res.send(league.schedule);
   } catch (e) {
-    res.status(400).send(e);
+    next(e);
   }
 });
 
