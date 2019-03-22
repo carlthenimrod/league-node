@@ -64,6 +64,8 @@ const availability = (function() {
         locations: game.place.locations,
         start: game.start
       });
+
+      return true;
     }
 
     const err = new Error('No slot available');
