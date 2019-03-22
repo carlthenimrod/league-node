@@ -1,11 +1,9 @@
 const mongoose = require('mongoose');
 
-const {Team} = require('./team');
-
 const gameSchema = new mongoose.Schema({
   home: {
     _id: {
-      type: mongoose.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       required: true
     },
     name: {
@@ -19,7 +17,7 @@ const gameSchema = new mongoose.Schema({
   },
   away: {
     _id: {
-      type: mongoose.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       required: true
     },
     name: {
@@ -38,7 +36,7 @@ const gameSchema = new mongoose.Schema({
   },
   place: {
     _id: {
-      type: mongoose.Types.ObjectId
+      type: mongoose.Schema.Types.ObjectId
     },
     name: {
       type: String,

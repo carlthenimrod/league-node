@@ -17,10 +17,20 @@ const placeSchema = new mongoose.Schema({
     label: String,
     slots: [{
       start: Date,
-      end: Date
+      end: Date,
+      games: [{
+        _id: mongoose.Schema.Types.ObjectId,
+        locations: [mongoose.Schema.Types.ObjectId],
+        start: Date
+      }]
     }]
   }]
 });
+
+placeSchema.methods.saveSlot = async function (game) {
+  console.log(this);
+  console.log(game);
+};
 
 const Place = mongoose.model('Place', placeSchema);
 

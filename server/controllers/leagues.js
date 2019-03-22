@@ -4,6 +4,7 @@ const {ObjectID} = require('mongodb');
 const {League, Division} = require('../models/league');
 const {Team} = require('../models/team');
 const {Game} = require('../models/game');
+const availability = require('../helpers/availability');
 
 router.get('/', async (req, res) => {
   try {
@@ -393,7 +394,11 @@ router.put('/:id/schedule/:groupId/games/:gameId', async (req, res, next) => {
     game.time = time;
     game.place = place;
 
+    // if place selected, check if available and save
+    if (place._id) { await availability.check(game); }
+
     await league.save();
+
     res.send(league.schedule);
   } catch (e) {
     next(e);
