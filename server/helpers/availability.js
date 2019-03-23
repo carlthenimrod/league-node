@@ -44,18 +44,18 @@ const availability = (function() {
 
       const slot = searchSlots(permit.slots, gameStart, gameEnd);
 
-      if (!slot) continue;
+      if (!slot) { continue; }
 
       // check place has locations, check if locations are available
       if (place.locations && place.locations.length > 0) {
-        searchLocations(game, place.locations, slot);
+        searchLocations(place.locations, game);
       }
 
       if (slot.games && slot.games.length > 0) {
-        const conflict = checkConflicts(game, slot);
+        const conflict = checkConflicts(slot, game.place.locations, gameStart, gameEnd);
 
         // try next
-        if (conflict) continue;
+        if (conflict) { continue; }
       }
 
       // add game to time slot
@@ -86,7 +86,7 @@ const availability = (function() {
     }
   }
 
-  const searchLocations = (game, locations) => {
+  const searchLocations = (locations, game) => {
     // make sure game has locations selected
     if (!game.place.locations || game.place.locations.length === 0) { 
       const err = new Error('Game needs to select locations');
@@ -108,11 +108,8 @@ const availability = (function() {
     }
   };
 
-  const checkConflicts = (game, slot) => {
-    const locations = game.place.locations;
+  const checkConflicts = (slot, locations, gameStart, gameEnd) => {
     const checkLocations = (locations.length > 0) ? true : false;
-    const gameStart = moment(game.start);
-    const gameEnd = gameStart.clone().add(2, 'hours');
 
     for (let i = 0; i < slot.games.length; i++) {
       const start = moment(slot.games[i].start);
