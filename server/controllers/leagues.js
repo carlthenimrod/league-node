@@ -395,7 +395,7 @@ router.put('/:id/schedule/:groupId/games/:gameId', async (req, res, next) => {
     game.place = place;
 
     // if place selected, check if available and save
-    if (place._id) { await availability.check(game); }
+    if (place && place._id) { await availability.check(game); }
 
     await league.save();
 
