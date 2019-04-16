@@ -96,7 +96,7 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-router.post('/:id/permits', async (req, res) => {
+router.post('/:id/permits', async (req, res, next) => {
   const id = req.params.id;
   const {label, slots} = req.body;
 
