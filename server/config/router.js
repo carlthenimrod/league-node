@@ -1,5 +1,6 @@
 const router = require('express').Router();
 
+const config = require('../controllers/config');
 const auth = require('../controllers/auth');
 const leagues = require('../controllers/leagues');
 const teams = require('../controllers/teams');
@@ -8,6 +9,7 @@ const places = require('../controllers/places');
 const notices = require('../controllers/notices');
 const sites = require('../controllers/sites');
 
+router.use('/config', config);
 router.use('/auth', auth);
 router.use('/leagues', leagues);
 router.use('/teams', teams);
