@@ -6,13 +6,15 @@ const teams = require('../controllers/teams');
 const users = require('../controllers/users');
 const places = require('../controllers/places');
 const notices = require('../controllers/notices');
+const sites = require('../controllers/sites');
 
 router.use('/auth', auth);
 router.use('/leagues', leagues);
-router.use('/notices', notices);
 router.use('/teams', teams);
 router.use('/users', users);
 router.use('/places', places);
+router.use('/notices', notices);
+router.use('/sites', sites);
 
 router.use((req, res, next) => {
   const error = new Error('Not Found');
