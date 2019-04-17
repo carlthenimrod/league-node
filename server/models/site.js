@@ -7,7 +7,6 @@ const siteSchema = new mongoose.Schema({
     type: String
   },
   url: {
-    required: true,
     trim: true,
     type: String
   }

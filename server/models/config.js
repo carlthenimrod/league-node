@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const configSchema = new mongoose.Schema({
   multi: { 
     type: Boolean, 
-    default: false, 
-    required: true 
+    default: false
   }
 }, {
   collection: 'config',
