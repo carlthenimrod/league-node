@@ -2,6 +2,7 @@ const router = require('express').Router();
 const {ObjectID} = require('mongodb');
 
 const {Site} = require('../models/site');
+const {League} = require('../models/league');
 
 router.get('/', async (req, res, next) => {
   try {
@@ -14,7 +15,6 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id', async(req, res, next) => {
   const id = req.params.id;
-  const {label, url} = req.body;
 
   try {
     if (!ObjectID.isValid(id)) {
@@ -56,6 +56,20 @@ router.put('/:id', async(req, res, next) => {
     const site = await Site.findById(id);
     site.label = label;
     site.url = url;
+
+    if (site.leagues.length > 0) {
+      const ids = site.leagues.map(site => site._id);
+      const leagues = await League.find({ _id: ids });
+      for (let i = 0; i < leagues.length; i++) {
+        const league = leagues[i];
+        const subdoc = league.sites.id(id);
+        subdoc.label = site.label;
+        subdoc._id = site._id;
+        
+        await league.save();
+      }
+    }
+
     await site.save();
     res.send(site);
   } catch (e) {
@@ -71,8 +85,9 @@ router.delete('/:id', async (req, res, next) => {
       const err = new Error('Invalid ID');
       err.status = 404;
       throw err;
-    }
 
+    }
+    await League.updateMany({}, { $pull: { sites: { _id: id } } });
     await Site.findByIdAndDelete(id);
     res.send();
   } catch (e) {

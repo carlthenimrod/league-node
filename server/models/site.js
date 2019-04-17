@@ -9,7 +9,11 @@ const siteSchema = new mongoose.Schema({
   url: {
     trim: true,
     type: String
-  }
+  },
+  leagues: [{
+    _id: mongoose.Types.ObjectId,
+    name: String
+  }]
 });
 
 const Site = mongoose.model('Site', siteSchema);

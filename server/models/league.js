@@ -2,9 +2,11 @@ const mongoose = require('mongoose');
 const ObjectId = mongoose.Types.ObjectId;
 const _ = require('lodash');
 
-const matchmaker = require('../helpers/matchmaker');
+const Config = require('./config');
+const {Site} = require('./site');
 const {Team} = require('./team');
 const {Game} = require('./game');
+const matchmaker = require('../helpers/matchmaker');
 
 const divisionSchema = new mongoose.Schema({
   name: {
@@ -37,6 +39,10 @@ const leagueSchema = new mongoose.Schema({
   schedule: [{
     label: { type: String },
     games: [Game.schema]
+  }],
+  sites: [{
+    _id: mongoose.Types.ObjectId,
+    label: String
   }],
   start: Date,
   end: Date
@@ -235,6 +241,41 @@ leagueSchema.methods.moveTeam = function (teamId, index) {
 
 leagueSchema.methods.generateSchedule = function (options) {
   matchmaker(this, options);
+}
+
+leagueSchema.methods.updateSites = async function (ids) {
+  const config = await Config.findOne();
+
+  if (!config || !config.multi) { return; }
+
+  // pull league id from all sites
+  await Site.updateMany({}, { 
+    $pull: { leagues: { _id: this.id } } 
+  });
+
+  // if ids exist, find site and store in league, otherwise empty array
+  if (ids && ids.length > 0) {
+    ids = ids.map(id => mongoose.Types.ObjectId(id));
+    const sites = await Site.find({ _id: ids });
+
+    // save league into every selected site
+    for (let i = 0; i < sites.length; i++) {
+      const site = sites[i];
+
+      site.leagues.push({
+        _id: this._id,
+        name: this.name
+      });
+
+      await site.save();
+    }
+
+    this.sites = sites.map(site => { 
+      return { _id, label } = site; 
+    });
+  } else {
+    this.sites = [];
+  }
 }
 
 const Division = mongoose.model('Division', divisionSchema);

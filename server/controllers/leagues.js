@@ -2,6 +2,7 @@ const router = require('express').Router();
 const {ObjectID} = require('mongodb');
 
 const {League, Division} = require('../models/league');
+const {Site} = require('../models/site');
 const {Team} = require('../models/team');
 const {Game} = require('../models/game');
 const availability = require('../helpers/availability');
@@ -41,6 +42,7 @@ router.post('/', async (req, res) => {
   });
 
   try {
+    await league.updateSites(req.body.sites);
     await league.save();
     res.send(league);
   } catch (e) {
@@ -56,13 +58,12 @@ router.put('/:id', async (req, res) => {
   }
 
   try {
-    const {name, description} = req.body;
-    const league = await League.findByIdAndUpdate(id, {
-      name,
-      description
-    }, {
-      new: true
-    });
+    const {name, description, sites} = req.body;
+    const league = await League.findById(id);
+    league.name = name;
+    league.description = description;
+    await league.updateSites(sites);
+    await league.save();
     res.send(league);
   } catch (e) {
     res.status(400).send(e);
@@ -77,6 +78,7 @@ router.delete('/:id', async (req, res) => {
   }
 
   try {
+    await Site.updateMany({}, { $pull: { leagues: { _id: id } } });
     await League.findByIdAndDelete(id);
     res.send();
   } catch (e) {
