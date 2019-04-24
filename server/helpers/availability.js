@@ -31,7 +31,7 @@ const availability = (function() {
 
   const searchPermits = (place, game) => {
     const gameStart = moment(game.start);
-    const gameEnd = gameStart.clone().add(2, 'hours');
+    const gameEnd = gameStart.clone().add(45, 'minutes');
 
     if (!place.permits || place.permits.length === 0) {
       const err = new Error('No Permits Available');
@@ -113,7 +113,7 @@ const availability = (function() {
 
     for (let i = 0; i < slot.games.length; i++) {
       const start = moment(slot.games[i].start);
-      const end = start.clone().add(2, 'hours');
+      const end = start.clone().add(45, 'minutes');
 
       // check if game is same time or between existing game
       if (gameStart.isSame(start) || 
