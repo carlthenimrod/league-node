@@ -71,7 +71,10 @@ const userSchema = new mongoose.Schema({
 }, { 
   toJSON: {
     virtuals: true
-  } 
+  },
+  toObject: {
+    virtuals: true
+  }
 });
 
 userSchema.virtual('fullName').get(function() {

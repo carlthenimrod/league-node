@@ -1,8 +1,6 @@
 const router = require('express').Router();
-const expressWs = require('express-ws')(router);
 const {ObjectID} = require('mongodb');
 
-const userStore = require('../stores/user-store');
 const {League, Division} = require('../models/league');
 const {Team} = require('../models/team');
 const {User} = require('../models/user');
@@ -297,9 +295,6 @@ router.delete('/:id/users/:userId', async (req, res) => {
   } catch (e) {
     next(e);
   }
-});
-
-router.ws('/:id', function(ws, req) {
 });
 
 module.exports = router;

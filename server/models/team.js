@@ -2,6 +2,14 @@ const mongoose = require('mongoose');
 
 const {Notice} = require('./notice');
 
+const rosterSchema = new mongoose.Schema({
+  user: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User' 
+  },
+  roles: [String]
+}, { _id: false });
+
 const teamSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -17,10 +25,7 @@ const teamSchema = new mongoose.Schema({
       return status;
     }
   },
-  roster: [{
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    roles: [String]
-  }]
+  roster: [rosterSchema]
 });
 
 const handleNotices = async function () {
