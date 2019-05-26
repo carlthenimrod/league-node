@@ -13,30 +13,38 @@ const init = server => {
   io.use(userStore.add);
 
   io.on('connection', socket => {
-    socket.on('disconnect', () => {
-      const _id = socket.handshake.query._id;
+    const userId = socket.handshake.query._id;
 
-      // remove socket from user
-      userStore.remove(socket);
+    // set status to online
+    teamStore.updateUserStatus(userId, 'online');
 
-      // get status
-      const status = userStore.getStatus(_id);
-
-      // if user went offline, change status for teams
-      if (status === 'offline') teamStore.updateUserStatus(_id, status);
-    });
-
-    socket.on('join', teamId => {
-      teamStore.join(io, socket, teamId);
-    });
-
-    socket.on('leave', teamId => {
-      teamStore.leave(io, socket, teamId);
-    });
+    // bind events
+    socket.on('disconnect', disconnect.bind(socket, userId));
+    socket.on('join', join.bind(socket));
+    socket.on('leave', leave.bind(socket));
   });
 
   return io;
 };
+
+const disconnect = function(userId) {
+  // remove socket from user
+  userStore.remove(this);
+
+  // get status
+  const status = userStore.getStatus(userId);
+
+  // if user went offline(no sockets), change status for teams
+  if (status === 'offline') teamStore.updateUserStatus(io, userId, status);
+};
+
+const join = function(teamId) {
+  teamStore.join(io, this, teamId);
+}
+
+const leave = function(teamId) {
+  teamStore.leave(this, teamId);
+}
 
 const authorize = (socket, next) => {
   const {access_token, refresh_token, _id } = socket.handshake.query;
@@ -61,9 +69,8 @@ const authorize = (socket, next) => {
 };
 
 const get = () => {
-  if (!io) {
-    throw new Error('No connection to socket');
-  }
+  if (!io) throw new Error('No connection to socket');
+  
   return io;
 };
 

@@ -10,7 +10,7 @@ const join = async (io, socket, teamId) => {
     // if no team, reach out to DB
     if (!team) { 
       team = await Team
-        .findById(teamId, 'name roster')
+        .findById(teamId, 'name roster.user')
         .populate('roster.user', 'name email friends');
 
       if (!team) throw new Error('No team found');
@@ -20,11 +20,14 @@ const join = async (io, socket, teamId) => {
       // check if on roster
       if (!onRoster(socket, team.roster)) throw new Error('Not on team');
 
-      // get roster status
-      getRosterStatus(team.roster);
+      // update roster status
+      updateRosterStatus(team.roster);
 
       // add team to store
       teams.push(team);
+    } else {
+      // update roster status
+      updateRosterStatus(team.roster);
     }
     
     // join room
@@ -33,14 +36,14 @@ const join = async (io, socket, teamId) => {
     // send roster
     io.to(teamId).emit('team', {
       action: 'roster',
-      roster: team.roster
+      data: team.roster
     });
   } catch (e) {
     console.log(e.message);
   }
 };
 
-const leave = (io, socket, teamId) => {
+const leave = (socket, teamId) => {
   socket.leave(teamId);
 };
 
@@ -56,7 +59,7 @@ const onRoster = (socket, roster) => {
   return false;
 };
 
-const getRosterStatus = (roster) => {
+const updateRosterStatus = (roster) => {
   for (let i = 0; i < roster.length; i++) {
     const user = roster[i].user;
 
@@ -64,7 +67,7 @@ const getRosterStatus = (roster) => {
   }
 };
 
-const updateUserStatus = (userId, status) => {
+const updateUserStatus = (io, userId, status) => {
   teams.forEach((team, index) => {
     let match = false;
 
@@ -75,6 +78,12 @@ const updateUserStatus = (userId, status) => {
       if (user._id.equals(userId)) {
         team.roster[i].status = status;
         match = true;
+
+        // send roster
+        io.to(team._id).emit('team', {
+          action: 'roster',
+          data: team.roster
+        });
       }
     }
 
