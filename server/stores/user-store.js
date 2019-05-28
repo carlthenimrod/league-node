@@ -66,10 +66,10 @@ const getStatus = _id => {
   for (let i = 0; i < users.length; i++) {
     const user = users[i];
     
-    if (user._id.equals(_id)) { return 'online'; }
+    if (user._id.equals(_id)) { return true; }
   }
 
-  return 'offline';
+  return false;
 };
 
 module.exports = {add, remove, getStatus};

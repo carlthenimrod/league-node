@@ -28,19 +28,16 @@ const userSchema = new mongoose.Schema({
     select: false
   },
   status: {
-    type: String,
-    enum: ['new', 'active', 'inactive', 'banned'],
-    default: 'new',
-    set: function(status) {
-      this._status = this.status;
-      return status;
+    new: {
+      type: Boolean,
+      default: true
+    },
+    verified: {
+      type: Boolean,
+      default: false
     }
   },
   img: String,
-  verified: {
-    type: Boolean,
-    default: false
-  },
   teams: [{ name: String }],
   tokens: {
     type: [{ 
@@ -69,6 +66,7 @@ const userSchema = new mongoose.Schema({
   },
   comments: {type: String, trim: true}
 }, { 
+  id: false,
   toJSON: {
     virtuals: true
   },
@@ -158,18 +156,12 @@ const checkVerification = function (next) {
 }
 
 const handleNotices = async function() {
-  if (this.isNew && this.status === 'new') {
+  if (this.isNew) {
     await Notice.create({
       notice: 'new',
       item: this._id,
       itemType: 'User'
     });
-  }
-
-  if (!this.isNew && this.isModified('status')) {
-    if (this._status === 'new' && this.status !== this._status) {
-      await Notice.findOneAndRemove({ item: this._id, notice: 'new' });
-    }
   }
 };
 

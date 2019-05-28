@@ -17,19 +17,20 @@ const teamSchema = new mongoose.Schema({
     trim: true
   },
   status: {
-    type: String,
-    enum: ['new', 'active', 'inactive'],
-    default: 'new',
-    set: function(status) {
-      this._status = this.status;
-      return status;
+    new: {
+      type: Boolean,
+      default: true
+    },
+    verified: {
+      type: Boolean,
+      default: false
     }
   },
   roster: [rosterSchema]
 });
 
 const handleNotices = async function () {
-  if (this.isNew && this.status === 'new') {
+  if (this.isNew && this.status.new) {
     await Notice.create({
       notice: 'new',
       item: this._id,
@@ -45,6 +46,27 @@ const handleNotices = async function () {
 };
 
 teamSchema.pre('save', handleNotices);
+
+teamSchema.statics.formatRoster = function (team) {
+  const roster = [];
+
+  team = team.toObject();
+
+  for (let i = 0; i < team.roster.length; i++) {
+    if (!team.roster[i].user) return;
+
+    const user = team.roster[i].user;
+    
+    if (team.roster[i].roles) {
+      user.roles = [...team.roster[i].roles];
+    }
+    roster.push(user);
+  }
+
+  team.roster = roster;
+
+  return team;
+};
 
 const Team = mongoose.model('Team', teamSchema);
 

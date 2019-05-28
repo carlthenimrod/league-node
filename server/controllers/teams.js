@@ -7,25 +7,28 @@ const {User} = require('../models/user');
 
 router.get('/', async (req, res) => {
   try {
-    const teams = await Team.find().populate('roster.user');
+    const teams = await Team.find();
     res.send(teams);
   } catch (e) {
     res.status(400).send(e);
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
   const id = req.params.id;
-  
-  if (!ObjectID.isValid(id)) {
-    return res.status(404).send();
-  }
 
   try {
-    const team = await Team.findById(id).populate('roster.user', 'name email img');
+    if (!ObjectID.isValid(id)) {
+      const err = new Error('Invalid ID');
+      err.status = 404;
+      throw err;
+    }
+
+    let team = await Team.findById(id).populate('roster.user');
+    team = Team.formatRoster(team);
     res.send(team);
   } catch (e) {
-    res.status(400).send(e);
+    next(e);
   }
 });
 
