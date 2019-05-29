@@ -10,6 +10,17 @@ const rosterSchema = new mongoose.Schema({
   roles: [String]
 }, { _id: false });
 
+const feedSchema = new mongoose.Schema({
+  type: String,
+  body: String,
+  from: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User' 
+  }
+}, {
+  timestamps: true
+});
+
 const teamSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -26,7 +37,8 @@ const teamSchema = new mongoose.Schema({
       default: false
     }
   },
-  roster: [rosterSchema]
+  roster: [rosterSchema],
+  feed: [feedSchema]
 });
 
 const handleNotices = async function () {

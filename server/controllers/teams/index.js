@@ -1,9 +1,9 @@
 const router = require('express').Router();
 const {ObjectID} = require('mongodb');
 
-const {League, Division} = require('../models/league');
-const {Team} = require('../models/team');
-const {User} = require('../models/user');
+const {League, Division} = require('../../models/league');
+const {Team} = require('../../models/team');
+const {User} = require('../../models/user');
 
 router.get('/', async (req, res) => {
   try {
