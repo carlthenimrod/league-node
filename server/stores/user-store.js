@@ -62,7 +62,7 @@ const filterFriends = friends => {
   return friends;
 };
 
-const getStatus = _id => {
+const isOnline = _id => {
   for (let i = 0; i < users.length; i++) {
     const user = users[i];
     
@@ -72,4 +72,4 @@ const getStatus = _id => {
   return false;
 };
 
-module.exports = {add, remove, getStatus};
+module.exports = {add, remove, isOnline};

@@ -22,6 +22,7 @@ const init = server => {
     socket.on('disconnect', disconnect.bind(socket, userId));
     socket.on('join', join.bind(socket));
     socket.on('leave', leave.bind(socket));
+    socket.on('feed', feed.bind(socket));
   });
 
   return io;
@@ -31,11 +32,11 @@ const disconnect = function(userId) {
   // remove socket from user
   userStore.remove(this);
 
-  // get status
-  const status = userStore.getStatus(userId);
+  // check if online
+  const online = userStore.isOnline(userId);
 
-  // if user went offline(no sockets), change status for teams
-  if (status === 'offline') teamStore.updateUserStatus(io, userId, status);
+  // if user went offline(no sockets), change to offline
+  if (!online) teamStore.updateUserStatus(io, userId, online);
 };
 
 const join = function(teamId) {
@@ -66,6 +67,10 @@ const authorize = (socket, next) => {
 
     return next();
   });
+};
+
+const feed = function(data) {
+  teamStore.feed(this, data);
 };
 
 const get = () => {

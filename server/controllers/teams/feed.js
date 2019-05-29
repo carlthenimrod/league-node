@@ -1,11 +1,12 @@
 const router = require('express').Router({ mergeParams: true });
 const {ObjectID} = require('mongodb');
 
+const {auth} = require('../../middleware/auth');
 const {Team} = require('../../models/team');
 
-router.post('/', async (req, res, next) => {
+router.post('/', auth, async (req, res, next) => {
   const id = req.params.id;
-  const {type, body, from} = req.body;
+  const {type, body} = req.body;
 
   try {
     if (!ObjectID.isValid(id)) {
@@ -22,16 +23,22 @@ router.post('/', async (req, res, next) => {
       throw err;
     }
 
-    const message = team.feed.create({type, body, from});
+    const message = team.feed.create({
+      type, 
+      body, 
+      from: req.user._id
+    });
     team.feed.push(message);
     await team.save();
+    await team.populate('feed.from', 'name email img roles').execPopulate();
+
     res.send(message);
   } catch (e) {
     next(e);
   }
 });
 
-router.put('/:messageId', async (req, res, next) => {
+router.put('/:messageId', auth, async (req, res, next) => {
   const {id, messageId} = req.params;
   const {body} = req.body;
 
@@ -52,15 +59,15 @@ router.put('/:messageId', async (req, res, next) => {
 
     const message = team.feed.id(messageId);
     message.body = body;
-    team.save();
-
+    await team.save();
+    await team.populate('feed.from', 'name email img roles').execPopulate();
     res.send(message);
   } catch (e) {
     next(e);
   }
 });
 
-router.delete('/:messageId', async (req, res, next) => {
+router.delete('/:messageId', auth, async (req, res, next) => {
   const {id, messageId} = req.params;
 
   try {

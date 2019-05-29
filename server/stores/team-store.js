@@ -66,20 +66,20 @@ const updateRosterStatus = (roster) => {
   for (let i = 0; i < roster.length; i++) {
     const user = roster[i];
 
-    roster[i].status.online = userStore.getStatus(user._id);
+    roster[i].status.online = userStore.isOnline(user._id);
   }
 };
 
-const updateUserStatus = (io, userId, status) => {
+const updateUserStatus = (io, userId, online) => {
   teams.forEach((team, index) => {
     let match = false;
 
-    // search teams for user, update their status
+    // search teams for user, update their online status
     for (let i = 0; i < team.roster.length; i++) {
       const user = team.roster[i];
       
       if (user._id.equals(userId)) {
-        team.roster[i].status = status;
+        team.roster[i].status.online = online;
         match = true;
 
         // send updated user
@@ -94,7 +94,7 @@ const updateUserStatus = (io, userId, status) => {
     }
 
     // if no users online, remove team from store
-    if (match && (status === 'offline')) {
+    if (match && !online) {
       const online = team.roster.filter(u => u.status.online);
 
       if (online.length === 0) teams.splice(index, 1);
@@ -102,4 +102,16 @@ const updateUserStatus = (io, userId, status) => {
   });
 };
 
-module.exports = {join, leave, updateUserStatus};
+const feed = (socket, data) => {
+  const {teamId, action, message} = data;
+
+  socket.to(teamId).broadcast.emit('team', {
+    event: 'feed',
+    data: {
+      action,
+      message
+    }
+  });
+};
+
+module.exports = {join, leave, updateUserStatus, feed};
