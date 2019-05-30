@@ -145,8 +145,6 @@ const typing = (socket, data) => {
       team.typing.splice(index, 1);
     }
 
-    console.log(team.typing);
-
     // broadcast to other team members
     socket.to(teamId).broadcast.emit('team', {
       event: 'typing',
