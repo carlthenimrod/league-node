@@ -16,6 +16,7 @@ const join = async (io, socket, teamId) => {
       if (!team) throw new Error('No team found');
 
       team = Team.formatRoster(team);
+      team.typing = [];
 
       // check if on roster
       if (!onRoster(socket, team.roster)) throw new Error('Not on team');
@@ -114,4 +115,46 @@ const feed = (socket, data) => {
   });
 };
 
-module.exports = {join, leave, updateUserStatus, feed};
+const typing = (socket, data) => {
+  const {teamId, isTyping} = data;
+
+  try {
+    const team = teams.find(t => t._id.equals(teamId));
+
+    if (!team) {
+      const err = new Error('No team found.');
+      throw err;
+    }
+
+    const user = userStore.getUserFromSocket(socket.id);
+    
+    if (!user) {
+      const err = new Error('No user found.');
+      throw err;
+    }
+
+    // add/remove to team store
+    if (isTyping) {
+      const match = team.typing.find(u => u._id.equals(user._id));
+      if (!match) {
+        const {_id, name, fullName} = user;
+        team.typing.push({_id, name, fullName});
+      }
+    } else {
+      const index = team.typing.findIndex(u => u._id.equals(user._id));
+      team.typing.splice(index, 1);
+    }
+
+    console.log(team.typing);
+
+    // broadcast to other team members
+    socket.to(teamId).broadcast.emit('team', {
+      event: 'typing',
+      data: { users: team.typing }
+    });
+  } catch (e) {
+    console.log(e.message);
+  }
+};
+
+module.exports = {join, leave, updateUserStatus, feed, typing};

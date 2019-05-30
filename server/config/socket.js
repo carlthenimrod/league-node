@@ -23,6 +23,7 @@ const init = server => {
     socket.on('join', join.bind(socket));
     socket.on('leave', leave.bind(socket));
     socket.on('feed', feed.bind(socket));
+    socket.on('typing', typing.bind(socket));
   });
 
   return io;
@@ -71,6 +72,10 @@ const authorize = (socket, next) => {
 
 const feed = function(data) {
   teamStore.feed(this, data);
+};
+
+const typing = function(data) {
+  teamStore.typing(this, data);
 };
 
 const get = () => {

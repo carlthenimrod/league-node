@@ -22,7 +22,8 @@ const add = async (socket, next) => {
 
     users.push({
       _id: user._id,
-      name: user.fullName,
+      name: user.name,
+      fullName: user.fullName,
       email: user.email,
       sockets: [socket.id],
       friends: user.friends
@@ -72,4 +73,14 @@ const isOnline = _id => {
   return false;
 };
 
-module.exports = {add, remove, isOnline};
+const getUserFromSocket = socketId => {
+  for (let i = 0; i < users.length; i++) {
+    const user = users[i];
+    
+    if (user.sockets.includes(socketId)) { return user; }
+  }
+
+  return false;
+};
+
+module.exports = {add, remove, isOnline, getUserFromSocket};
