@@ -38,6 +38,8 @@ const mailer = {
     const transporter = await getTransporter(),
           to = (typeof options === 'string') ? options : options.to;
 
+          console.log(transporter);
+
     if (transporter) {
       try {
         const email = new Email({
