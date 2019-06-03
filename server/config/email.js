@@ -50,9 +50,15 @@ const mailer = {
               extension: 'hbs'
             },
             root: path.join(__dirname, '../emails')
-          },
-          preview: { app: 'chrome' }
+          }
         });
+
+        if (!config.email.host) {
+          email.config.preview = { app: 'chrome' };
+        }
+        else {
+          email.config.preview = false;
+        }
 
         const send = await email.send({
           template,

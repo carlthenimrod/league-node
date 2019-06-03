@@ -15,5 +15,7 @@ app.use('/public', express.static(path.join('server/public')));
 
 app.use('/', router);
 
+console.log(config);
+
 const server = app.listen(config.port);
 const io = require('./config/socket').init(server);
