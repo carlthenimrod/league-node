@@ -7,6 +7,8 @@ const {Game} = require('../models/game');
 const availability = require('../helpers/availability');
 
 router.get('/', async (req, res) => {
+  console.log(req.originalUrl);
+
   try {
     const leagues = await League.find();
     res.send(leagues);

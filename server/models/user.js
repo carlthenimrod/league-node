@@ -117,11 +117,9 @@ const createConfirmationToken = async function () {
     });
 
     if (this.email) {
-      const link = `http://localhost:4200/confirm/${this._id}?code=${code}`;
-
       mailer.send('user/confirm', this.email, {
         name: this.fullName, 
-        link
+        link: config.baseUrl + `confirm/${this._id}?code=${code}`
       });
     }
   }
