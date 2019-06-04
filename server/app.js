@@ -16,10 +16,7 @@ app.use('/public', express.static(path.join('server/public')));
 
 app.use('/', router);
 
-mailer.send('user/confirm', 'carl@invisible-gorilla.com', {
-  name: 'test', 
-  link: 'http://www.google.com/'
-});
+console.log(process.env.NODE_ENV);
 
 const server = app.listen(config.port);
-const io = require('./config/socket').init(server);
+require('./config/socket').init(server);
