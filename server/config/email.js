@@ -17,6 +17,9 @@ const getTransporter = async () => {
         auth: {
           user: account.user,
           pass: account.pass
+        },
+        tls: {
+          ignoreTLS: false
         }
       });
     }
