@@ -2,9 +2,6 @@ const path = require('path');
 const fs = require('fs');
 const ejs = require('ejs');
 const sgMail = require('@sendgrid/mail');
-// const open = require('open');
-// const temp = require('temp').track();
-
 const config = require('./config');
 
 // set API key
@@ -42,21 +39,27 @@ const send = async (template, options, data = {}) => {
       // send email
       sgMail.send(msg);
     } else {
-      // // create temporary file
-      // temp.open({ suffix: '.html' }, async (e, info) => {
-      //   if (e) throw(e);
-        
-      //   // write to file
-      //   fs.write(info.fd, html, (err) => {
-      //     if (err) { throw(err); }
-      //   });
+      // development only, create html file, open in browser
+      if (process.env.NODE_ENV !== 'development') { return };
 
-      //   // take file when done, open in chrome
-      //   fs.close(info.fd, (err) => {
-      //     if (err) { throw(err); }
-      //     open(info.path, { app: 'chrome' });
-      //   })
-      // });
+      const open = require('open');
+      const temp = require('temp').track();
+      
+      // create temporary file
+      temp.open({ suffix: '.html' }, async (e, info) => {
+        if (e) throw(e);
+        
+        // write to file
+        fs.write(info.fd, html, (err) => {
+          if (err) { throw(err); }
+        });
+
+        // take file when done, open in chrome
+        fs.close(info.fd, (err) => {
+          if (err) { throw(err); }
+          open(info.path, { app: 'chrome' });
+        })
+      });
     }
   } catch (e) {
     console.log(e.toString());
