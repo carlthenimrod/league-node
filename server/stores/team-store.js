@@ -96,6 +96,9 @@ const updateUserStatus = (io, userId, online) => {
 
     // if no users online, remove team from store
     if (match && !online) {
+      const index = team.typing.findIndex(u => u._id.equals(userId));
+      if (index > -1) { team.typing.splice(index, 1); }
+
       const online = team.roster.filter(u => u.status.online);
 
       if (online.length === 0) teams.splice(index, 1);

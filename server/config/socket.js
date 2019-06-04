@@ -57,7 +57,7 @@ const authorize = (socket, next) => {
 
   const decoded = jwt.decode(access_token, config.accessToken.secret);
 
-  if (decoded._id !== _id) { 
+  if (!decoded || (decoded._id !== _id)) { 
     return next(new Error('Unable to authenticate - ID invalid'));
   }
   

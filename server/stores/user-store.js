@@ -11,23 +11,22 @@ const add = async (socket, next) => {
     // if user already in store, add new connection
     if (match) { 
       match.sockets.push(socket.id);
-      return next();
+    } else {
+      // new user, add to store
+      const user = await User.findById(_id, 'name email friends');
+  
+      // check friends
+      user.friends = filterFriends(user.friends);
+  
+      users.push({
+        _id: user._id,
+        name: user.name,
+        fullName: user.fullName,
+        email: user.email,
+        sockets: [socket.id],
+        friends: user.friends
+      });
     }
-
-    // new user, add to store
-    const user = await User.findById(_id, 'name email friends');
-
-    // check friends
-    user.friends = filterFriends(user.friends);
-
-    users.push({
-      _id: user._id,
-      name: user.name,
-      fullName: user.fullName,
-      email: user.email,
-      sockets: [socket.id],
-      friends: user.friends
-    });
   } catch (e) {
     return next(e);
   }
