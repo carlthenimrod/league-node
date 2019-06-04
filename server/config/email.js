@@ -1,91 +1,47 @@
-const nodemailer = require('nodemailer');
-const Email = require('email-templates');
 const path = require('path');
+const ejs = require('ejs');
+const sgMail = require('@sendgrid/mail');
 
 const config = require('./config');
 
-const getTransporter = async () => {
-  // create transporter for testing
-  if (!config.email.apiKey) {
-    const account = await nodemailer.createTestAccount();
+// set API key
+if (config.email.apiKey) {
+  sgMail.setApiKey(config.email.apiKey);
+}
 
-    if (account) {
-      return nodemailer.createTransport({
-        host: account.smtp.host,
-        port: account.smtp.port,
-        secure: account.smtp.secure,
-        auth: {
-          user: account.user,
-          pass: account.pass
-        },
-        tls: {
-          ignoreTLS: false
-        }
-      });
+// send email
+const send = async (template, options, data = {}) => {
+  try {
+    // get to/from email address to be used
+    const to = (typeof options === 'string') ? options : options.to;
+    const from = options.from || config.email.fromDefault;
+    
+    // create path to template
+    const templatePath = path.join(__dirname, '../emails/', template, '/');
+    const ejsOptions = { async: true };
+
+    // render files
+    const subject = await ejs.renderFile(templatePath + 'subject.ejs', data, ejsOptions);
+    const text = await ejs.renderFile(templatePath + 'text.ejs', data, ejsOptions);
+    const html = await ejs.renderFile(templatePath + 'html.ejs', data, ejsOptions);
+
+    // if we have API key, send email
+    if (config.email.apiKey) {
+      // create message
+      const msg = {
+        to,
+        from,
+        subject,
+        text,
+        html
+      };
+    
+      // send email
+      sgMail.send(msg);
     }
-  } else {
-    sgMail.setApiKey(config.email.apiKey);
-
-    return nodemailer.createTransport({
-      host: config.email.host,
-      port: config.email.port,
-      secure: config.email.secure,
-      auth: {
-        user: config.email.user,
-        pass: config.email.pass
-      }
-    });
+  } catch (e) {
+    console.log(e.toString());
   }
 };
 
-const mailer = {
-  send: async (template, options, data = {}) => {
-    const transporter = await getTransporter(),
-          to = (typeof options === 'string') ? options : options.to;
-
-    // verify connection configuration
-    transporter.verify(function(error, success) {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log("Server is ready to take our messages");
-      }
-    });
-
-    if (transporter) {
-      try {
-        const email = new Email({
-          message: {
-            from: options.from || config.email.default
-          },
-          transport: transporter,
-          views: {
-            options: {
-              extension: 'hbs'
-            },
-            root: path.join(__dirname, '../emails')
-          }
-        });
-
-        if (!config.email.host) {
-          email.config.preview = { app: 'chrome' };
-        }
-        else {
-          email.config.preview = false;
-        }
-
-        const send = await email.send({
-          template,
-          message: { to },
-          locals: {...data}
-        });
-
-        if (send) { console.log(send); }
-      } catch (e) {
-        return console.log(e);
-      }
-    }
-  }
-};
-
-module.exports = mailer;
+module.exports = { send };

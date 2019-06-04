@@ -12,13 +12,8 @@ const config = {
     expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '30d'
   },
   email: {
-    apiKey: process.env.SENDGRID_API_KEY || false,
-    host: process.env.EMAIL_HOST || false,
-    port: process.env.EMAIL_PORT || false,
-    user: process.env.EMAIL_USERNAME || false,
-    pass: process.env.EMAIL_PASSWORD || false,
-    secure: (process.env.EMAIL_SECURE.toLocaleLowerCase() === 'true') || false,
-    default: process.env.EMAIL_FROM_DEFAULT || false
+    apiKey: process.env.EMAIL_API_KEY || false,
+    fromDefault: process.env.EMAIL_FROM_DEFAULT || false,
   }
 };
 
