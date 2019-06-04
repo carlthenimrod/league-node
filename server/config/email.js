@@ -6,7 +6,7 @@ const config = require('./config');
 
 const getTransporter = async () => {
   // create transporter for testing
-  if (!config.email.host) {
+  if (!config.email.apiKey) {
     const account = await nodemailer.createTestAccount();
 
     if (account) {
@@ -24,6 +24,8 @@ const getTransporter = async () => {
       });
     }
   } else {
+    sgMail.setApiKey(config.email.apiKey);
+
     return nodemailer.createTransport({
       host: config.email.host,
       port: config.email.port,
