@@ -16,7 +16,7 @@ const init = server => {
     const userId = socket.handshake.query._id;
 
     // set status to online
-    teamStore.updateUserStatus(userId, 'online');
+    teamStore.updateUserStatus(io, userId, true);
 
     // bind events
     socket.on('disconnect', disconnect.bind(socket, userId));

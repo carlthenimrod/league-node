@@ -72,7 +72,7 @@ const updateRosterStatus = (roster) => {
 };
 
 const updateUserStatus = (io, userId, online) => {
-  teams.forEach((team, index) => {
+  teams.forEach(team => {
     let match = false;
 
     // search teams for user, update their online status
