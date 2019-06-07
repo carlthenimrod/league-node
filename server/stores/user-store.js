@@ -52,6 +52,20 @@ const remove = socket => {
   }
 };
 
+const update = (io, updatedUser) => {
+  for (let i = 0; i < users.length; i++) {
+    const user = users[i];
+
+    if (user._id.equals(updatedUser._id)) {
+      const {name, email, fullName} = updatedUser;
+
+      user.name = name;
+      user.email = email;
+      user.fullName = fullName;
+    }
+  }
+};
+
 const filterFriends = friends => {
   if (!friends) { return; } // :(
 
@@ -82,4 +96,10 @@ const getUserFromSocket = socketId => {
   return false;
 };
 
-module.exports = {add, remove, isOnline, getUserFromSocket};
+module.exports = {
+  add, 
+  remove, 
+  update,
+  isOnline, 
+  getUserFromSocket
+};

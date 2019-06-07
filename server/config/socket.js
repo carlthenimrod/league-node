@@ -84,4 +84,9 @@ const get = () => {
   return io;
 };
 
-module.exports = {init, get};
+const updateUser = updatedUser => {
+  userStore.update(io, updatedUser);
+  teamStore.updateUser(io, updatedUser);
+};
+
+module.exports = {init, get, updateUser};

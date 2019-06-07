@@ -4,6 +4,7 @@ const {ObjectID} = require('mongodb');
 const upload = require('../middleware/upload');
 const {User} = require('../models/user');
 const {Team} = require('../models/team');
+const socket = require('../config/socket');
 
 router.get('/', async (req, res) => {
   try {
@@ -77,7 +78,6 @@ router.put('/:id', async (req, res, next) => {
 
     const user = await User.findById(id);
     user.name = name;
-    user.status = status;
     user.address = address;
     user.phone = phone;
     user.secondary = secondary;
@@ -85,6 +85,7 @@ router.put('/:id', async (req, res, next) => {
     user.comments = comments;
 
     await user.save();
+    socket.updateUser(user);
     res.send(user);
   } catch (e) {
     next(e);

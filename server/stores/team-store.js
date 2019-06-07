@@ -11,7 +11,7 @@ const join = async (io, socket, teamId) => {
     if (!team) { 
       team = await Team
         .findById(teamId, 'name roster')
-        .populate('roster.user', 'friends status');
+        .populate('roster.user', 'name email friends status');
 
       if (!team) throw new Error('No team found');
 
@@ -69,6 +69,30 @@ const updateRosterStatus = (roster) => {
 
     roster[i].status.online = userStore.isOnline(user._id);
   }
+};
+
+const updateUser = (io, updatedUser) => {
+  teams.forEach(team => {
+    for (let i = 0; i < team.roster.length; i++) {
+      const user = team.roster[i];
+
+      if (user._id.equals(updatedUser._id)) {
+        const {name, fullName, email} = updatedUser;
+        user.name = name;
+        user.fullName = fullName;
+        user.email = email;
+
+        // send updated user
+        io.to(team._id).emit('team', {
+          event: 'roster',
+          data: {
+            action: 'update',
+            users: [user]
+          }
+        });
+      }
+    }
+  });
 };
 
 const updateUserStatus = (io, userId, online) => {
@@ -158,4 +182,4 @@ const typing = (socket, data) => {
   }
 };
 
-module.exports = {join, leave, updateUserStatus, feed, typing};
+module.exports = {join, leave, updateUser, updateUserStatus, feed, typing};
