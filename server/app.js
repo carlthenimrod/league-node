@@ -16,4 +16,4 @@ app.use('/public', express.static(path.join('server/public')));
 app.use('/', router);
 
 const server = app.listen(config.port);
-require('./config/socket').init(server);
+require('./config/socket')(server);

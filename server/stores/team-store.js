@@ -1,74 +1,57 @@
 const {Team} = require('../models/team');
-const userStore = require('./user-store');
 
 const teams = [];
 
-const join = async (io, socket, teamId) => {
+const get = async (teamId, userId, create) => {
+  let team;
+
   try {
-    let team = teams.find(t => t._id.equals(teamId));
+    if (!teamId) { return teams; }
 
-    // if no team, reach out to DB
-    if (!team) { 
-      team = await Team
-        .findById(teamId, 'name roster')
-        .populate('roster.user', 'name email friends status');
-
-      if (!team) throw new Error('No team found');
-
-      team = Team.formatRoster(team);
-      team.typing = [];
-
-      // check if on roster
-      if (!onRoster(socket, team.roster)) throw new Error('Not on team');
-
-      // update roster status
-      updateRosterStatus(team.roster);
-
-      // add team to store
-      teams.push(team);
-    } else {
-      // update roster status
-      updateRosterStatus(team.roster);
+    team = teams.find(t => t._id.equals(teamId));
+    if (team) { 
+      if (userId && !isOnTeam(team, userId)) throw new Error('Not on Team.');
+    } else if (!team && create) {
+      team = await insert(teamId, userId); 
     }
-    
-    // join room
-    socket.join(teamId);
 
-    // send roster
-    io.to(teamId).emit('team', {
-      event: 'roster',
-      data: {
-        action: 'update',
-        users: team.roster
-      }
-    });
+    return team;
   } catch (e) {
-    console.log(e.message);
+    throw e;
   }
 };
 
-const leave = (socket, teamId) => {
-  socket.leave(teamId);
+const insert = async (teamId, userId) => {
+  let team;
+
+  try {
+    team = await Team
+      .findById(teamId, 'name roster')
+      .populate('roster.user', 'name email friends status');
+    
+    if (!team) throw new Error('No Team Found');
+  
+    team = Team.formatRoster(team);
+    team.typing = [];
+
+    if (userId && !isOnTeam(team, userId)) throw new Error('Not on Team.');
+
+    teams.push(team);
+
+    return team;
+  } catch (e) {
+    throw e;
+  }
 };
 
-const onRoster = (socket, roster) => {
-  const _id = socket.handshake.query._id;
+const isOnTeam = (team, userId) => {
+  for (let i = 0; i < team.roster.length; i++) {
+    const user = team.roster[i];
 
-  for (let i = 0; i < roster.length; i++) {
-    const user = roster[i];
-    
-    if (user._id.equals(_id)) { return true; }
+    if (user._id.equals(userId)) { return true; }
   }
 
   return false;
-};
-
-const updateRosterStatus = (roster) => {
-  for (let i = 0; i < roster.length; i++) {
-    const user = roster[i];
-
-    roster[i].status.online = userStore.isOnline(user._id);
-  }
 };
 
 const updateUser = (io, updatedUser) => {
@@ -130,18 +113,6 @@ const updateUserStatus = (io, userId, online) => {
   });
 };
 
-const feed = (socket, data) => {
-  const {teamId, action, message} = data;
-
-  socket.to(teamId).broadcast.emit('team', {
-    event: 'feed',
-    data: {
-      action,
-      message
-    }
-  });
-};
-
 const typing = (socket, data) => {
   const {teamId, isTyping} = data;
 
@@ -182,4 +153,4 @@ const typing = (socket, data) => {
   }
 };
 
-module.exports = {join, leave, updateUser, updateUserStatus, feed, typing};
+module.exports = {get, updateUser, updateUserStatus, typing};

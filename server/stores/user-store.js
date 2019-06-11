@@ -2,54 +2,50 @@ const {User} = require('../models/user');
 
 const users = [];
 
-const add = async (socket, next) => {
-  const _id = socket.handshake.query._id;
+const get = async (userId, create) => {
+  try {
+    if (!userId) { return users; }
+  
+    user = users.find(u => u._id.equals(userId));
+  
+    if (!user && create) {
+      user = await insert(userId);
+    }
+  
+    if (!user) throw new Error('No User Found');
+  
+    return user;
+  } catch (e) {
+    throw e;
+  }
+}
+
+const insert = async userId => {
+  let user;
 
   try {
-    const match = users.find(u => u._id.equals(_id));
+    user = await User.findById(userId, 'name email friends');
+  
+    if (!user) throw new Error('No User Found in Database');
+  
+    user = user.toObject();
 
-    // if user already in store, add new connection
-    if (match) { 
-      match.sockets.push(socket.id);
-    } else {
-      // new user, add to store
-      const user = await User.findById(_id, 'name email friends');
+    // check friends
+    user.friends = filterFriends(user.friends);
   
-      // check friends
-      user.friends = filterFriends(user.friends);
-  
-      users.push({
-        _id: user._id,
-        name: user.name,
-        fullName: user.fullName,
-        email: user.email,
-        sockets: [socket.id],
-        friends: user.friends
-      });
-    }
+    // add to store
+    users.push(user);
+
+    return user;
   } catch (e) {
-    return next(e);
+    throw e;
   }
-
-  return next();
 };
 
-const remove = socket => {
-  for (let i = 0; i < users.length; i++) {
-    const user = users[i];
-    
-    // check all users for socket id
-    const index = user.sockets.indexOf(socket.id);
+const remove = userId => {
+  const index = users.findIndex(user => user._id.equals(userId));
 
-    if (index >= 0) {
-      user.sockets.splice(index, 1);
-
-      // if no more sockets, remove user from store
-      if (user.sockets.length === 0) {
-        users.splice(i, 1);
-      }
-    }
-  }
+  users.splice(index, 1);
 };
 
 const update = (io, updatedUser) => {
@@ -97,7 +93,7 @@ const getUserFromSocket = socketId => {
 };
 
 module.exports = {
-  add, 
+  get,
   remove, 
   update,
   isOnline, 
