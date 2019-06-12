@@ -15,7 +15,5 @@ app.use('/public', express.static(path.join('server/public')));
 
 app.use('/', router);
 
-console.log('test');
-
 const server = app.listen(config.port);
 require('./config/socket')(server);
