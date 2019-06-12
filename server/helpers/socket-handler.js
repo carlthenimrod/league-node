@@ -26,6 +26,8 @@ class SocketHandler {
     try {
       const user = await userStore.get(this.userId, true);
       this.addSocket(user);
+
+      const teams = await teamStore.get();
     } catch (e) {
       console.log(e.toString());
     }
