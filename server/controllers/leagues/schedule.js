@@ -46,7 +46,7 @@ router.delete('/', async (req, res, next) => {
   }
 });
 
-router.post('/:id/schedule/add', async (req, res, next) => {
+router.post('/add', async (req, res, next) => {
   const id = req.params.id;
   const label = req.body.label;
 
@@ -73,7 +73,7 @@ router.post('/:id/schedule/add', async (req, res, next) => {
   }
 });
 
-router.put('/:id/schedule/:groupId', async (req, res, next) => {
+router.put('/:groupId', async (req, res, next) => {
   const {id, groupId} = req.params;
   const label = req.body.label;
 
@@ -95,7 +95,7 @@ router.put('/:id/schedule/:groupId', async (req, res, next) => {
   }
 });
 
-router.delete('/:id/schedule/:groupId', async (req, res, next) => {
+router.delete('/:groupId', async (req, res, next) => {
   const {id, groupId} = req.params;
 
   try {
@@ -116,7 +116,7 @@ router.delete('/:id/schedule/:groupId', async (req, res, next) => {
   }
 });
 
-router.post('/:id/schedule/:groupId/games', async (req, res, next) => {
+router.post('/:groupId/games', async (req, res, next) => {
   const {id, groupId} = req.params;
   const {home, away, start, time, place} = req.body;
 
@@ -145,7 +145,7 @@ router.post('/:id/schedule/:groupId/games', async (req, res, next) => {
   }
 });
 
-router.put('/:id/schedule/:groupId/games/:gameId', async (req, res, next) => {
+router.put('/:groupId/games/:gameId', async (req, res, next) => {
   const {id, groupId, gameId} = req.params;
   const {home, away, start, time, place} = req.body;
 

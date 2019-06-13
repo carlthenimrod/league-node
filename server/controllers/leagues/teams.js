@@ -40,6 +40,8 @@ router.post('/', async (req, res, next) => {
     const league = await League.findById(id);
     league.teams.push(team);
     await league.save();
+    team.leagues.push(league._id);
+    await team.save();
 
     res.send(team);
   } catch (e) {
@@ -87,9 +89,26 @@ router.delete('/:teamId', async (req, res, next) => {
     }
 
     const league = await League.findById(id);
+    if (!league) {
+      const err = new Error('League Not Found');
+      err.status = 404;
+      throw err;
+    }
+
     league.removeTeamFromDivisions(teamId);
     league.teams.id(teamId).remove();
     await league.save();
+
+    const team = await Team.findById(teamId);
+    if (!team) {
+      const err = new Error('Team Not Found');
+      err.status = 404;
+      throw err;
+    }
+    const index = team.leagues.indexOf(teamId);
+    team.leagues.splice(index, 1);
+    await team.save();
+
     res.send(league);
   } catch (e) {
     next(e);
