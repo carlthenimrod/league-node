@@ -38,7 +38,8 @@ const teamSchema = new mongoose.Schema({
     }
   },
   roster: [rosterSchema],
-  feed: [feedSchema]
+  feed: [feedSchema],
+  leagues: [{ type: mongoose.Schema.Types.ObjectId, ref: 'League' }]
 });
 
 const handleNotices = async function () {

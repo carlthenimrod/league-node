@@ -5,12 +5,12 @@ const {League, Division} = require('../../models/league');
 const {Team} = require('../../models/team');
 const {User} = require('../../models/user');
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
   try {
     const teams = await Team.find();
     res.send(teams);
   } catch (e) {
-    res.status(400).send(e);
+    next(e);
   }
 });
 
@@ -26,7 +26,12 @@ router.get('/:id', async (req, res, next) => {
 
     let team = await Team.findById(id)
       .populate('roster.user')
+<<<<<<< HEAD
       .populate('feed.from', 'name email img');
+=======
+      .populate('leagues', 'name schedule')
+      .populate('feed.from', 'name email');
+>>>>>>> 2755d26467adb281e866043b60142189d0434c37
       
     team = Team.formatRoster(team);
     res.send(team);
@@ -35,7 +40,7 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
   let league,
       division;
 
@@ -85,11 +90,11 @@ router.post('/', async (req, res) => {
 
     res.send(team);
   } catch (e) {
-    res.status(400).send(e);
+    next(e);
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', async (req, res, next) => {
   let league,
       division;
 
@@ -102,7 +107,9 @@ router.put('/:id', async (req, res) => {
   } = req.body;
   
   if (!ObjectID.isValid(id)) {
-    return res.status(404).send();
+    const err = new Error('Invalid ID');
+    err.status = 404;
+    throw err;
   }
 
   // if leagueId provided, check if valid and exists
@@ -147,26 +154,28 @@ router.put('/:id', async (req, res) => {
 
     res.send(team);
   } catch (e) {
-    res.status(400).send(e);
+    next(e);
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req, res, next) => {
   const id = req.params.id;
   
   if (!ObjectID.isValid(id)) {
-    return res.status(404).send();
+    const err = new Error('Invalid ID');
+    err.status = 404;
+    throw err;
   }
 
   try {
     await Team.findByIdAndDelete(id);
     res.send();
   } catch (e) {
-    res.status(400).send(e);
+    next(e);
   }
 });
 
-router.post('/:id/users', async (req, res) => {
+router.post('/:id/users', async (req, res, next) => {
   const id = req.params.id;
   const {
     userId,
@@ -225,7 +234,7 @@ router.post('/:id/users', async (req, res) => {
   }
 });
 
-router.put('/:id/users/:userId', async (req, res) => {
+router.put('/:id/users/:userId', async (req, res, next) => {
   const {id, userId} = req.params;
   const {roles} = req.body;
 
@@ -260,7 +269,7 @@ router.put('/:id/users/:userId', async (req, res) => {
   }
 });
 
-router.delete('/:id/users/:userId', async (req, res) => {
+router.delete('/:id/users/:userId', async (req, res, next) => {
   const {id, userId} = req.params;
 
   try {
