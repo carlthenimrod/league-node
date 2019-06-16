@@ -26,12 +26,8 @@ router.get('/:id', async (req, res, next) => {
 
     let team = await Team.findById(id)
       .populate('roster.user')
-<<<<<<< HEAD
-      .populate('feed.from', 'name email img');
-=======
       .populate('leagues', 'name schedule')
-      .populate('feed.from', 'name email');
->>>>>>> 2755d26467adb281e866043b60142189d0434c37
+      .populate('feed.from', 'name email img');
       
     team = Team.formatRoster(team);
     res.send(team);
