@@ -271,4 +271,22 @@ router.post('/:id/img', upload, async (req, res, next) => {
   }
 });
 
+router.post('/search', async (req, res, next) => {
+  const {email} = req.body;
+
+  if (!email) {
+    const err = new Error('No Email');
+    err.status = 400;
+    throw err;
+  }
+
+  try {
+    const user = await User.findOne({ email }, 'name fullName email img');
+
+    res.send(user);
+  } catch (e) {
+    next(e);
+  }
+});
+
 module.exports = router;
