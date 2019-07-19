@@ -26,6 +26,7 @@ router.get('/:id', async (req, res, next) => {
 
     let team = await Team.findById(id)
       .populate('roster.user')
+      .populate('pending')
       .populate('leagues', 'name schedule teams divisions')
       .populate('feed.from', 'name email img');
       
@@ -303,6 +304,57 @@ router.delete('/:id/users/:userId', async (req, res, next) => {
     await team.save();
 
     res.send(team);
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post('/:id/invite', async (req, res, next) => {
+  const id = req.params.id;
+  const userId = req.body._id;
+
+  try {
+    if (!ObjectID.isValid(id)) {
+      const err = new Error('Invalid ID');
+      err.status = 400;
+      throw err;
+    }
+
+    const team = await Team.findById(id);
+    if (!team.pending) { team.pending = []; }
+
+    if (team.pending.indexOf(userId) !== -1) {
+      const err = new Error('User already invited');
+      err.status = 400;
+      throw err;
+    }
+    
+    if (!team) {
+      const err = new Error('Team not found');
+      err.status = 404;
+      throw err;
+    }
+
+    if (userId) {
+      if (!ObjectID.isValid(userId)) {
+        const err = new Error('Invalid ID');
+        err.status = 400;
+        throw err;
+      }
+
+      const user = await User.findById(userId);
+    
+      if (!user) {
+        const err = new Error('User not found');
+        err.status = 404;
+        throw err;
+      }
+
+      team.pending.push(userId);
+      await team.save();
+    }
+
+    res.send(user);
   } catch (e) {
     next(e);
   }

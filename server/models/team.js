@@ -38,6 +38,7 @@ const teamSchema = new mongoose.Schema({
     }
   },
   roster: [rosterSchema],
+  pending: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   feed: [feedSchema],
   leagues: [{ type: mongoose.Schema.Types.ObjectId, ref: 'League' }]
 });
