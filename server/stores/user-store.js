@@ -3,6 +3,8 @@ const {User} = require('../models/user');
 const users = [];
 
 const get = async (userId, create) => {
+  let user;
+  
   try {
     if (!userId) { return users; }
   

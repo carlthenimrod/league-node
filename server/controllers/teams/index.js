@@ -312,6 +312,7 @@ router.delete('/:id/users/:userId', async (req, res, next) => {
 router.post('/:id/invite', async (req, res, next) => {
   const id = req.params.id;
   const userId = req.body._id;
+  let user;
 
   try {
     if (!ObjectID.isValid(id)) {
@@ -342,7 +343,7 @@ router.post('/:id/invite', async (req, res, next) => {
         throw err;
       }
 
-      const user = await User.findById(userId);
+      user = await User.findById(userId);
     
       if (!user) {
         const err = new Error('User not found');
@@ -351,6 +352,14 @@ router.post('/:id/invite', async (req, res, next) => {
       }
 
       team.pending.push(userId);
+      await team.save();
+    } else {
+      const {email, name} = req.body;
+
+      user = new User({ email, name });
+      await user.save();
+
+      team.pending.push(user._id);
       await team.save();
     }
 
