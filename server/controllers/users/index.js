@@ -1,9 +1,9 @@
 const router = require('express').Router();
 const {ObjectID} = require('mongodb');
 
-const upload = require('../middleware/upload');
-const {User} = require('../models/user');
-const {Team} = require('../models/team');
+const upload = require('../../middleware/upload');
+const {User} = require('../../models/user');
+const {Team} = require('../../models/team');
 
 router.get('/', async (req, res) => {
   try {
@@ -284,26 +284,6 @@ router.post('/search', async (req, res, next) => {
     const user = await User.findOne({ email }, 'name fullName email img');
 
     res.send(user);
-  } catch (e) {
-    next(e);
-  }
-});
-
-router.get('/:id/notifications', async (req, res, next) => {
-  const id = req.params.id;
-
-  try {
-    if (!ObjectID.isValid(id)) {
-      const err = new Error('Invalid ID');
-      err.status = 400;
-      throw err;
-    }
-    
-    const user = await User.findById(id, 'notifications')
-      .populate('notifications.team', 'name img')
-      .populate('notifications.user', 'name fullName img');
-
-    res.send(user.notifications);
   } catch (e) {
     next(e);
   }

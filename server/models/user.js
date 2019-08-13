@@ -64,7 +64,20 @@ const userSchema = new mongoose.Schema({
     phone: {type: String, trim: true},
     secondary: {type: String, trim: true}
   },
-  comments: {type: String, trim: true}
+  notifications: {
+    type: [{
+      type: {type: String, required: true},
+      action: {type: String, required: true},
+      user: {ref: 'User', type: mongoose.Schema.Types.ObjectId},
+      team: {ref: 'Team', type: mongoose.Schema.Types.ObjectId},
+      status: {
+        read: {type: Boolean, default: false},
+        pending: {type: Boolean},
+        accepted: {type: Boolean}
+      }
+    }],
+    select: false
+  }
 }, { 
   id: false,
   toJSON: {
