@@ -197,7 +197,7 @@ router.post('/:id/users', async (req, res, next) => {
         throw err;
       }
     } else { // create new
-      user = new User({name});
+      user = new User({ name });
     }
 
     const team = await Team.findById(id).populate('roster.user');
@@ -218,11 +218,10 @@ router.post('/:id/users', async (req, res, next) => {
       }
     }
 
-    user.addTeam(team);
+    user.teams.push(id);
     await user.save();
 
     team.roster.push({user, roles});
-
     await team.save();
 
     res.send(team);
@@ -298,7 +297,7 @@ router.delete('/:id/users/:userId', async (req, res, next) => {
       }
     }
 
-    user.removeTeam(team._id);
+    user.teams.pull(id);
     await user.save();
 
     await team.save();

@@ -38,7 +38,7 @@ const userSchema = new mongoose.Schema({
     }
   },
   img: String,
-  teams: [{ name: String }],
+  teams: [{ref: 'Team', type: mongoose.Schema.Types.ObjectId}],
   tokens: {
     type: [{ 
       _id: false, 
@@ -182,7 +182,13 @@ userSchema.pre('save', checkVerification);
 userSchema.pre('save', handleNotices);
 
 userSchema.statics.findByCredentials = async function (email, password) {
-  const user = await this.findOne({email}, '+password +tokens');
+  const user = await this
+    .findOne({ email }, '+password +tokens')
+    .populate({
+      path: 'teams',
+      select: 'name leagues status',
+      populate: { path: 'leagues', select: 'name status' }
+    });
 
   if (!user) {
     const err =  new Error('Email not found.');
@@ -202,29 +208,50 @@ userSchema.statics.findByCredentials = async function (email, password) {
 
 userSchema.statics.refreshToken = async function (client, refresh_token) {
   const decoded = jwt.verify(refresh_token, config.refreshToken.secret);
-  if (decoded.client !== client) throw new Error();
+  if (decoded.client !== client) {
+    const error = new Error('Client doesn\'t match');
+    error.status = 401;
+    throw err;
+  }
 
-  const user = await this.findOne({
-    'tokens.client': client, 
-    'tokens.token': refresh_token,
-    'tokens.type': 'access'
-  });
-  if (!user) throw new Error();
+  const user = await this
+    .findOne({
+      'tokens.client': client, 
+      'tokens.token': refresh_token,
+      'tokens.type': 'refresh'
+    })
+    .populate({
+      path: 'teams',
+      select: 'name leagues status img',
+      populate: { path: 'leagues', select: 'name status img' }
+    });
+  
+  if (!user) {
+    const err = new Error('User not found.');
+    err.status = 401;
+    throw err;
+  }
 
   const access_token = jwt.sign({
-    _id: this._id,
-    email: this.email
+    _id: user._id,
+    email: user.email,
+    name: user.name,
+    fullName: user.fullName,
+    status: user.status,
+    img: user.img,
+    teams: user.teams
   }, config.accessToken.secret, {
     expiresIn: config.accessToken.expiresIn
   });
 
-  return access_token;
+  return {user, access_token};
 };
 
 userSchema.statics.removeToken = async function (client, refresh_token) {
   await this.updateOne({
     'tokens.client': client,
-    'tokens.token': refresh_token
+    'tokens.token': refresh_token,
+    'tokens.type': 'refresh'
   }, {
     $pull: { tokens: { client, token: refresh_token } }
   });
@@ -259,7 +286,12 @@ userSchema.methods.verifyPassword = async function (password) {
 userSchema.methods.generateTokens = async function () {
   const access_token = jwt.sign({
     _id: this._id,
-    email: this.email
+    email: this.email,
+    name: this.name,
+    fullName: this.fullName,
+    status: this.status,
+    img: this.img,
+    teams: this.teams
   }, config.accessToken.secret, {
     expiresIn: config.accessToken.expiresIn
   });
@@ -272,7 +304,8 @@ userSchema.methods.generateTokens = async function () {
 
   this.tokens.push({
     client, 
-    token: refresh_token
+    token: refresh_token,
+    type: 'refresh'
   });
 
   while (this.tokens.length > 5) {
@@ -301,31 +334,6 @@ userSchema.methods.recoverPassword = async function() {
     });
   }
 }
-
-userSchema.methods.addTeam = function (team) {
-  const user = this;
-  
-  for (let i = 0; i < user.teams.length; i++) {
-    const t = user.teams[i];
-    
-    if (t._id.equals(team._id)) { user.teams.splice(i, 1); }
-  }
-
-  user.teams.push({
-    _id: team._id,
-    name: team.name
-  });
-};
-
-userSchema.methods.removeTeam = function (teamId) {
-  const user = this;
-  
-  for (let i = 0; i < user.teams.length; i++) {
-    const t = user.teams[i];
-    
-    if (t._id.equals(teamId)) { user.teams.splice(i, 1); }
-  }
-};
 
 const User = mongoose.model('User', userSchema);
 

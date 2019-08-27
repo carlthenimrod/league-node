@@ -17,6 +17,11 @@ router.post('/login', async (req, res, next) => {
     res.send({
       _id: user._id,
       email: user.email,
+      name: user.name,
+      fullName: user.fullName,
+      status: user.status,
+      img: user.img,
+      teams: user.teams,
       ...tokens
     });
   } catch (e) {
@@ -24,18 +29,33 @@ router.post('/login', async (req, res, next) => {
   }
 });
 
-router.post('/refresh', async (req, res) => {
+router.post('/refresh', async (req, res, next) => {
+  const {client, refresh_token} = req.body;
+
   try {
-    const access_token = await User.refreshToken(req.body.client, req.body.refresh_token);
-    res.send({access_token});
+    const {user, access_token} = await User.refreshToken(client, refresh_token);
+    res.send({
+      _id: user._id,
+      email: user.email,
+      name: user.name,
+      fullName: user.fullName,
+      status: user.status,
+      img: user.img,
+      teams: user.teams,
+      client,
+      access_token,
+      refresh_token
+    });
   } catch (e) {
-    res.status(401).send();
+    next(e);
   }
 });
 
 router.delete('/logout', async (req, res) => {
+  const {client, refresh_token} = req.body;
+
   try {
-    await User.removeToken(req.body.client, req.body.refresh_token);
+    await User.removeToken(client, refresh_token);
     res.send();
   } catch (e) {
     next(e);
