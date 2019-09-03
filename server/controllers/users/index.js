@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const {ObjectID} = require('mongodb');
 
+const {loggedIn} = require('../../middleware/auth');
 const upload = require('../../middleware/upload');
 const {User} = require('../../models/user');
 const {Team} = require('../../models/team');
@@ -288,5 +289,7 @@ router.post('/search', async (req, res, next) => {
     next(e);
   }
 });
+
+router.use('/:id/notifications', loggedIn, require('./notifications'));
 
 module.exports = router;

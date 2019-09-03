@@ -1,9 +1,10 @@
 const router = require('express').Router();
 const {ObjectID} = require('mongodb');
 
+const {loggedIn, isAdmin} = require('../../middleware/auth');
 const {League} = require('../../models/league');
 
-router.get('/', async (req, res, next) => {
+router.get('/', isAdmin, async (req, res, next) => {
   try {
     const leagues = await League.find();
     res.send(leagues);
@@ -12,7 +13,7 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', loggedIn, async (req, res, next) => {
   const id = req.params.id;
   
   if (!ObjectID.isValid(id)) {
@@ -29,7 +30,7 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-router.post('/', async (req, res, next) => {
+router.post('/', isAdmin, async (req, res, next) => {
   const league = new League({
     name: req.body.name,
     description: req.body.description,
@@ -45,11 +46,13 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', isAdmin, async (req, res, next) => {
   const id = req.params.id;
   
   if (!ObjectID.isValid(id)) {
-    return res.status(404).send();
+    const err = new Error('Invalid ID');
+    err.status = 404;
+    throw err;
   }
 
   try {
@@ -64,11 +67,13 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', isAdmin, async (req, res, next) => {
   const id = req.params.id;
 
   if (!ObjectID.isValid(id)) {
-    res.status(404).send();
+    const err = new Error('Invalid ID');
+    err.status = 404;
+    throw err;
   }
 
   try {
@@ -79,5 +84,9 @@ router.delete('/:id', async (req, res, next) => {
     next(e);
   }
 });
+
+router.use('/:id/divisions', isAdmin, require('./divisions'));
+router.use('/:id/teams', isAdmin, require('./teams'));
+router.use('/:id/schedule', isAdmin, require('./schedule'));
 
 module.exports = router;

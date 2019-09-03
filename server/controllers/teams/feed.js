@@ -1,10 +1,9 @@
 const router = require('express').Router({ mergeParams: true });
 const {ObjectID} = require('mongodb');
 
-const {auth} = require('../../middleware/auth');
 const {Team} = require('../../models/team');
 
-router.post('/', auth, async (req, res, next) => {
+router.post('/', async (req, res, next) => {
   const id = req.params.id;
   const {type, body} = req.body;
 
@@ -38,7 +37,7 @@ router.post('/', auth, async (req, res, next) => {
   }
 });
 
-router.put('/:messageId', auth, async (req, res, next) => {
+router.put('/:messageId', async (req, res, next) => {
   const {id, messageId} = req.params;
   const {body} = req.body;
 
@@ -67,7 +66,7 @@ router.put('/:messageId', auth, async (req, res, next) => {
   }
 });
 
-router.delete('/:messageId', auth, async (req, res, next) => {
+router.delete('/:messageId', async (req, res, next) => {
   const {id, messageId} = req.params;
 
   try {

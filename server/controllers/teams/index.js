@@ -1,11 +1,12 @@
 const router = require('express').Router();
 const {ObjectID} = require('mongodb');
 
+const {loggedIn, isAdmin} = require('../../middleware/auth');
 const {League, Division} = require('../../models/league');
 const {Team} = require('../../models/team');
 const {User} = require('../../models/user');
 
-router.get('/', async (req, res, next) => {
+router.get('/', isAdmin, async (req, res, next) => {
   try {
     const teams = await Team.find();
     res.send(teams);
@@ -14,7 +15,7 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', loggedIn, async (req, res, next) => {
   const id = req.params.id;
 
   try {
@@ -37,7 +38,7 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-router.post('/', async (req, res, next) => {
+router.post('/', isAdmin, async (req, res, next) => {
   let league,
       division;
 
@@ -91,7 +92,7 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', isAdmin, async (req, res, next) => {
   let league,
       division;
 
@@ -155,7 +156,7 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', isAdmin, async (req, res, next) => {
   const id = req.params.id;
   
   if (!ObjectID.isValid(id)) {
@@ -172,140 +173,8 @@ router.delete('/:id', async (req, res, next) => {
   }
 });
 
-router.post('/:id/users', async (req, res, next) => {
-  const id = req.params.id;
-  const {
-    userId,
-    name,
-    roles
-  } = req.body;
-  let user;
-
-  try {
-    if (!ObjectID.isValid(id)) {
-      const err = new Error('ID not found.');
-      err.status = 404;
-      throw err;
-    }
-
-    // check if user exists already
-    if (userId) {
-      user = await User.findById(userId);
-      if (!user) {
-        const err = new Error('User not found.');
-        err.status = 404;
-        throw err;
-      }
-    } else { // create new
-      user = new User({ name });
-    }
-
-    const team = await Team.findById(id).populate('roster.user');
-    if (!team) {
-      const err = new Error('Team not found.');
-      err.status = 404;
-      throw err;
-    }
-
-    // remove user if exists already
-    if (userId) { 
-      for (let i = 0; i < team.roster.length; i++) {5
-        const u = team.roster[i].user;
-
-        if (u._id.equals(ObjectID(user._id))) { 
-          team.roster.splice(i, 1); 
-        }
-      }
-    }
-
-    user.teams.push(id);
-    await user.save();
-
-    team.roster.push({user, roles});
-    await team.save();
-
-    res.send(team);
-  } catch (e) {
-    next(e);
-  }
-});
-
-router.put('/:id/users/:userId', async (req, res, next) => {
-  const {id, userId} = req.params;
-  const {roles} = req.body;
-
-  try {
-    if (!ObjectID.isValid(id) || !ObjectID.isValid(userId)) {
-      const err = new Error('ID not found.');
-      err.status = 404;
-      throw err;
-    }
-
-    // find team
-    const team = await Team.findById(id).populate('roster.user');
-    if (!team) {
-      const err = new Error('Team not found.');
-      err.status = 404;
-      throw err;
-    }
-    
-    for (let i = 0; i < team.roster.length; i++) {
-      const u = team.roster[i].user;
-
-      if (u._id.equals(ObjectID(userId))) {
-        team.roster[i].roles = roles;
-      }
-    }
-
-    await team.save();
-
-    res.send(team);
-  } catch (e) {
-    next(e);
-  }
-});
-
-router.delete('/:id/users/:userId', async (req, res, next) => {
-  const {id, userId} = req.params;
-
-  try {
-    if (!ObjectID.isValid(id) || !ObjectID.isValid(userId)) {
-      const err = new Error('ID not found.');
-      err.status = 404;
-      throw err;
-    }
-
-    const team = await Team.findById(id).populate('roster.user');
-    if (!team) {
-      const err = new Error('Team not found.');
-      err.status = 404;
-      throw err;
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      const err = new Error('User not found.');
-      err.status = 404;
-      throw err;
-    }
-    
-    for (let i = 0; i < team.roster.length; i++) {5
-      const u = team.roster[i].user;
-
-      if (u._id.equals(ObjectID(userId))) {
-        team.roster.splice(i, 1);
-      }
-    }
-
-    user.teams.pull(id);
-    await user.save();
-
-    await team.save();
-
-    res.send(team);
-  } catch (e) {
-    next(e);
-  }
-});
+router.use('/:id/users', isAdmin, require('./users'));
+router.use('/:id/feed', loggedIn, require('./feed'));
+router.use('/:id/invite', loggedIn, require('./invite'));
 
 module.exports = router;

@@ -1,9 +1,9 @@
 const router = require('express').Router();
 
-const {auth} = require('../middleware/auth');
+const {loggedIn} = require('../middleware/auth');
 const {User} = require('../models/user');
 
-router.get('/me', auth, (req, res) => {
+router.get('/me', loggedIn, (req, res, next) => {
   res.send(req.user);
 });
 
@@ -51,7 +51,7 @@ router.post('/refresh', async (req, res, next) => {
   }
 });
 
-router.delete('/logout', async (req, res) => {
+router.delete('/logout', async (req, res, next) => {
   const {client, refresh_token} = req.body;
 
   try {
