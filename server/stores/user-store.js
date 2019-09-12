@@ -1,54 +1,39 @@
-const {User} = require('../models/user');
-
 const users = [];
 
-const get = async (userId, create) => {
-  let user;
+const add = (user, socketId) => {
+  const match = users.find(u => u._id.equals(user._id));
   
-  try {
-    if (!userId) { return users; }
-  
-    user = users.find(u => u._id.equals(userId));
-  
-    if (!user && create) {
-      user = await insert(userId);
-    }
-  
-    if (!user) throw new Error('No User Found');
-  
-    return user;
-  } catch (e) {
-    throw e;
+  if (match) {
+    match.sockets.push(socketId);
+  } else {
+    users.push({
+      _id: user._id,
+      email: user.email,
+      name: user.name,
+      fullName: user.fullName,
+      status: [user.status],
+      sockets: [socketId]
+    });
   }
+};
+
+const remove = (user, socketId) => {
+  const index = users.findIndex(u => u._id.equals(user._id))
+  const match = users[index];
+
+  match.sockets.splice(match.sockets.indexOf(socketId), 1);
+  if (match.sockets.length === 0) { users.splice(index, 1); }
+};
+
+const get = (userId) => {
+  if (!userId) { return users; }
+
+  const match = users.find(u => u._id.equals(userId));
+
+  if (!match) { return false; }
+
+  return match;
 }
-
-const insert = async userId => {
-  let user;
-
-  try {
-    user = await User.findById(userId, 'name email friends');
-  
-    if (!user) throw new Error('No User Found in Database');
-  
-    user = user.toObject();
-
-    // check friends
-    user.friends = filterFriends(user.friends);
-  
-    // add to store
-    users.push(user);
-
-    return user;
-  } catch (e) {
-    throw e;
-  }
-};
-
-const remove = userId => {
-  const index = users.findIndex(user => user._id.equals(userId));
-
-  users.splice(index, 1);
-};
 
 const update = (io, updatedUser) => {
   for (let i = 0; i < users.length; i++) {
@@ -62,16 +47,6 @@ const update = (io, updatedUser) => {
       user.fullName = fullName;
     }
   }
-};
-
-const filterFriends = friends => {
-  if (!friends) { return; } // :(
-
-  for (let i = 0; i < friends.length; i++) {
-    const friend = friends[i];
-  }
-
-  return friends;
 };
 
 const isOnline = _id => {
@@ -95,8 +70,9 @@ const getUserFromSocket = socketId => {
 };
 
 module.exports = {
+  add,
+  remove,
   get,
-  remove, 
   update,
   isOnline, 
   getUserFromSocket

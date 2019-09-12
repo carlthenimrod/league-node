@@ -7,14 +7,17 @@ class SocketHandler {
   constructor(connection) {
     this.io = connection.io;
     this.socket = connection.socket;
-    this.userId = connection.userId;
+    this.user = connection.user;
 
     this.connect();
     this.handle();
   }
 
+  connect() {
+    userStore.add(this.user, this.socket.id);
+  }
+
   handle() {
-    // bind events
     this.socket.on('disconnect', this.disconnect.bind(this));
     this.socket.on('join', this.join.bind(this));
     this.socket.on('leave', this.leave.bind(this));
@@ -22,24 +25,8 @@ class SocketHandler {
     this.socket.on('typing', this.typing.bind(this));
   }
 
-  async connect() {
-    try {
-      const user = await userStore.get(this.userId, true);
-      this.addSocket(user);
-
-      const teams = await teamStore.get();
-    } catch (e) {
-      console.log(e.toString());
-    }
-  }
-
-  async disconnect() {
-    try {
-      const user = await userStore.get(this.userId);
-      this.removeSocket(user);
-    } catch (e) {
-      console.log(e.toString());
-    }
+  disconnect() {
+    userStore.remove(this.user, this.socket.id);
   }
 
   addSocket(user) {

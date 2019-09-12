@@ -1,54 +1,55 @@
-const jwt = require('jsonwebtoken');
-const {ObjectID} = require('mongodb');
-
-const config = require('./config');
 const SocketHandler = require('../helpers/socket-handler');
+const {User} = require('../models/user');
 
 let io;
 
 const init = server => {
   io = require('socket.io')(server);
-
-  io.use(authorize);
-  io.on('connection', createHandler);
+  io.on('connection', connect);
 
   return io;
 };
 
-const authorize = (socket, next) => {
-  const {access_token, refresh_token, _id } = socket.handshake.query;
-
+const authorize = async (client, refresh_token) => {
   try {
-    if (!_id || !ObjectID.isValid(_id)) {
-      throw new Error('Invalid ID');
-    }
-  
-    if (!access_token || !refresh_token || !_id) {
-      throw new Error('Unable to authenticate - Missing data');
-    }
-  
-    const decoded = jwt.decode(access_token, config.accessToken.secret);
-  
-    if (!decoded || (decoded._id !== _id)) { 
-      throw new Error('Unable to authenticate - ID invalid');
-    }
+    const { user, access_token } = await User.refreshToken(client, refresh_token);
     
-    jwt.verify(refresh_token, config.refreshToken.secret, (err, decoded) => {
-      if (err) { 
-        throw new Error('Unable to authenticate - Token Invalid');
-      }
-  
-      return next();
-    });
+    return { user, access_token };
   } catch (e) {
-    next(e);
+    throw e;
   }
 };
 
-const createHandler = socket => {
-  const userId = socket.handshake.query._id;
+const connect = socket => {
+  const timeout = setTimeout(() => {
+    socket.disconnect('Unauthorized');
+  }, 5000);
 
-  new SocketHandler({ io, socket, userId });
+  socket.on('authorize', async data => {
+    const { client, refresh_token } = data;
+
+    try {
+      const { user, access_token } = await authorize(client, refresh_token);
+      clearTimeout(timeout);
+
+      socket.emit('authorized', {
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        fullName: user.fullName,
+        status: user.status,
+        img: user.img,
+        teams: user.teams,
+        client,
+        access_token,
+        refresh_token
+      });
+      
+      new SocketHandler({ io, socket, user });
+    } catch (e) {
+      socket.disconnect('Unauthorized');
+    }
+  });
 }
 
 module.exports = init;
