@@ -5,19 +5,19 @@ const {isAdmin} = require('../middleware/auth');
 
 // controllers
 const authController = require('../controllers/auth');
-const leagues = require('../controllers/leagues');
-const teams = require('../controllers/teams');
-const users = require('../controllers/users');
-const places = require('../controllers/places');
-const notices = require('../controllers/notices');
+const leagueController = require('../controllers/leagues');
+const teamController = require('../controllers/teams');
+const userController = require('../controllers/users');
+const placeController = require('../controllers/places');
+const noticeController = require('../controllers/notices');
 
 // routes
 router.use('/auth', authController);
-router.use('/leagues', leagues);
-router.use('/teams', teams);
-router.use('/users', users);
-router.use('/places', isAdmin, places);
-router.use('/notices', isAdmin, notices);
+router.use('/leagues', leagueController);
+router.use('/teams', teamController);
+router.use('/users', userController);
+router.use('/places', isAdmin, placeController);
+router.use('/notices', isAdmin, noticeController);
 
 // 404
 router.use((req, res, next) => {

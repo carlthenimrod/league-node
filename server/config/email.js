@@ -3,6 +3,9 @@ const fs = require('fs');
 const ejs = require('ejs');
 const sgMail = require('@sendgrid/mail');
 const config = require('./config');
+const open = require('open');
+const temp = require('temp').track();
+const os = require("os");
 
 // set API key
 if (config.email.apiKey) {
@@ -39,12 +42,6 @@ const send = async (template, options, data = {}) => {
       // send email
       sgMail.send(msg);
     } else {
-      // development only, create html file, open in browser
-      if (process.env.NODE_ENV !== 'development') { return };
-
-      const open = require('open');
-      const temp = require('temp').track();
-      
       // create temporary file
       temp.open({ suffix: '.html' }, async (e, info) => {
         if (e) throw(e);
@@ -57,7 +54,7 @@ const send = async (template, options, data = {}) => {
         // take file when done, open in chrome
         fs.close(info.fd, (err) => {
           if (err) { throw(err); }
-          open(info.path, { app: 'chrome' });
+          open(info.path, { app: getApp() });
         })
       });
     }
@@ -65,5 +62,16 @@ const send = async (template, options, data = {}) => {
     console.log(e.toString());
   }
 };
+
+const getApp = () => {
+  switch (os.type()) {
+    case 'Windows_NT':
+      return 'chrome';
+    case 'Darwin':
+      return 'google chrome';
+    default:
+      return 'google-chrome';
+  }
+}
 
 module.exports = { send };
