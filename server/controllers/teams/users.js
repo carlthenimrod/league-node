@@ -2,6 +2,7 @@ const router = require('express').Router({ mergeParams: true });
 const {ObjectID} = require('mongodb');
 
 const {Team} = require('../../models/team');
+const {User} = require('../../models/user');
 
 router.post('/', async (req, res, next) => {
   const id = req.params.id;

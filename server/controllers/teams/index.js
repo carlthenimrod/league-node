@@ -4,7 +4,6 @@ const {ObjectID} = require('mongodb');
 const {loggedIn, isAdmin} = require('../../middleware/auth');
 const {League, Division} = require('../../models/league');
 const {Team} = require('../../models/team');
-const {User} = require('../../models/user');
 
 router.get('/', isAdmin, async (req, res, next) => {
   try {
