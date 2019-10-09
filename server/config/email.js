@@ -42,6 +42,8 @@ const send = async (template, options, data = {}) => {
       // send email
       sgMail.send(msg);
     } else {
+      if (config.environment !== 'development') { return; }
+
       // create temporary file
       temp.open({ suffix: '.html' }, async (e, info) => {
         if (e) throw(e);

@@ -3,7 +3,7 @@ const router = require('express').Router();
 const {loggedIn} = require('../middleware/auth');
 const {User} = require('../models/user');
 
-router.get('/me', loggedIn, (req, res, next) => {
+router.get('/me', loggedIn, (req, res) => {
   res.send(req.user);
 });
 

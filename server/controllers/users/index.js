@@ -149,7 +149,13 @@ router.post('/:id/password', async (req, res, next) => {
       throw err;
     }
 
-    const user = await User.findById(id, '+tokens');
+    const user = await User
+      .findById(id, '+tokens')
+      .populate({
+        path: 'teams',
+        select: 'name leagues status',
+        populate: { path: 'leagues', select: 'name status' }
+      });
 
     if (!user) {
       const err = new Error('User not found.');
@@ -165,6 +171,11 @@ router.post('/:id/password', async (req, res, next) => {
       res.send({
         _id: user._id,
         email: user.email,
+        name: user.name,
+        fullName: user.fullName,
+        status: user.status,
+        img: user.img,
+        teams: user.teams,
         ...tokens
       });
     }

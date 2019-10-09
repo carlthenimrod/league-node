@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const config = {
+  environment: process.env.NODE_ENV || 'development',
   baseUrl: process.env.BASE_URL || 'http://localhost:4200/',
   port: parseInt(process.env.PORT) || 3000,
   db: process.env.MONGODB_URI || 'mongodb://localhost:27017/league',
