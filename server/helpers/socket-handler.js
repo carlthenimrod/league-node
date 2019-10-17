@@ -4,8 +4,9 @@ const userStore = require('../stores/user-store');
 const teamStore = require('../stores/team-store');
 
 class SocketHandler {
+  static io;
+
   constructor(connection) {
-    this.io = connection.io;
     this.socket = connection.socket;
     this.user = connection.user;
 
@@ -186,11 +187,23 @@ class SocketHandler {
       console.log(e.toString());
     }
   }
-}
+  
+  static leagueEvent = (action, {_id, name, status} = {}, userIds) => {
+    for (let i = 0; i < userIds.length; i++) {
+      const userId = userIds[i];
+      const users = userStore.get();
 
-const updateUser = updatedUser => {
-  userStore.update(io, updatedUser);
-  teamStore.updateUser(io, updatedUser);
-};
+      const match = users.find(u => u._id.equals(userId));
+      if (!match) { continue; }
+  
+      match.sockets.forEach(socketId => 
+        this.io.to(socketId).emit('league', { 
+          action, 
+          league: {_id, name, status} 
+        })
+      ); 
+    }
+  };
+}
 
 module.exports = SocketHandler;

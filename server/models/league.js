@@ -5,6 +5,7 @@ const _ = require('lodash');
 const {Team} = require('./team');
 const {Game} = require('./game');
 const matchmaker = require('../helpers/matchmaker');
+const SocketHandler = require('../helpers/socket-handler');
 
 const divisionSchema = new mongoose.Schema({
   name: {
@@ -40,6 +41,22 @@ const leagueSchema = new mongoose.Schema({
   }],
   start: Date,
   end: Date
+});
+
+leagueSchema.pre('save', async function() {
+  if (!this.isModified()) { return; }
+
+  const userIds = [];
+
+  this.teams.forEach(team => 
+    team.roster.forEach(u => userIds.push(u.user))
+  );
+
+  SocketHandler.leagueEvent(
+    this.isNew ? 'new' : 'update', 
+    this, 
+    userIds
+  );
 });
 
 leagueSchema.methods.findDivision = function (id, elements) {

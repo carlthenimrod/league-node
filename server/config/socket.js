@@ -4,8 +4,9 @@ const {User} = require('../models/user');
 let io;
 
 const init = server => {
-  io = require('socket.io')(server);
+  io = require('socket.io')(server, { pingTimeout: 30000 });
   io.on('connection', connect);
+  SocketHandler.io = io;
 
   return io;
 };
@@ -45,8 +46,9 @@ const connect = socket => {
         refresh_token
       });
       
-      new SocketHandler({ io, socket, user });
+      new SocketHandler({ socket, user });
     } catch (e) {
+      console.log(e.message);
       socket.disconnect('Unauthorized');
     }
   });
