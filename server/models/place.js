@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const placeSchema = new mongoose.Schema({
-  name: {
+  label: {
     type: String,
     trim: true,
     required: true
@@ -12,25 +12,20 @@ const placeSchema = new mongoose.Schema({
     state: {type: String, trim: true},
     postal: {type: String, trim: true}
   },
-  locations: [{ name: String }],
+  locations: [{ 
+    name: { type: String, required: true, trim: true }
+  }],
   permits: [{ 
-    label: String,
-    slots: [{
+    start: Date,
+    end: Date,
+    games: [{
+      _id: mongoose.Schema.Types.ObjectId,
+      locations: [mongoose.Schema.Types.ObjectId],
       start: Date,
-      end: Date,
-      games: [{
-        _id: mongoose.Schema.Types.ObjectId,
-        locations: [mongoose.Schema.Types.ObjectId],
-        start: Date
-      }]
+      end: Date
     }]
   }]
 });
-
-placeSchema.methods.saveSlot = async function (game) {
-  console.log(this);
-  console.log(game);
-};
 
 const Place = mongoose.model('Place', placeSchema);
 

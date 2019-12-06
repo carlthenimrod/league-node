@@ -1,9 +1,9 @@
 const router = require('express').Router();
 const {ObjectID} = require('mongodb');
 
-const {Place} = require('../models/place');
+const {Place} = require('../../models/place');
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
   try {
     const places = await Place.find();
     res.send(places);
@@ -12,15 +12,32 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
+  try {
+    const id = req.params.id;
+
+    if (!ObjectID.isValid(id)) {
+      const err = new Error('Invalid ID');
+      err.status = 404;
+      throw err;
+    }
+
+    const place = await Place.findById(id);
+    res.send(place);
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post('/', async (req, res, next) => {
   const {
-    name,
+    label,
     address,
     locations
   } = req.body;
 
   try {
-    const place = new Place({ name, address, locations });
+    const place = new Place({ label, address, locations });
     await place.save();
     res.send(place);
   } catch (e) {
@@ -28,10 +45,11 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
-  const id = req.params.id;
-
+router.put('/:id', async (req, res, next) => {
   try {
+    const id = req.params.id;
+    const {label, address, locations} = req.body;
+
     if (!ObjectID.isValid(id)) {
       const err = new Error('Invalid ID');
       err.status = 404;
@@ -39,47 +57,18 @@ router.get('/:id', async (req, res) => {
     }
 
     const place = await Place.findById(id);
-    res.send(place);
-  } catch (e) {
-    next(e);
-  }
-});
-
-router.put('/:id', async (req, res) => {
-  const id = req.params.id;
-  const {
-    name,
-    address,
-    locations
-  } = req.body;
-
-
-  try {
-    if (!ObjectID.isValid(id)) {
-      const err = new Error('Invalid ID');
-      err.status = 404;
-      throw err;
-    }
-
-    const place = await Place.findById(id);
-
-    if (!place) {
-      const err = new Error('Place not found.');
-      err.status = 404;
-      throw err;
-    }
-
-    place.name = name;
+    place.label = label;
     place.address = address;
     place.locations = locations;
     await place.save();
+
     res.send(place);
   } catch (e) {
     next(e);
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req, res, next) => {
   const id = req.params.id;
 
   try {

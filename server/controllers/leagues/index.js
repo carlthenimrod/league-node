@@ -77,7 +77,6 @@ router.delete('/:id', isAdmin, async (req, res, next) => {
   }
 
   try {
-    await Site.updateMany({}, { $pull: { leagues: { _id: id } } });
     await League.findByIdAndDelete(id);
     res.send();
   } catch (e) {

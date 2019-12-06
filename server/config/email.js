@@ -46,18 +46,18 @@ const send = async (template, options, data = {}) => {
 
       // create temporary file
       temp.open({ suffix: '.html' }, async (e, info) => {
-        if (e) throw(e);
+        if (e) { throw(e) };
         
         // write to file
         fs.write(info.fd, html, (err) => {
           if (err) { throw(err); }
-        });
 
-        // take file when done, open in chrome
-        fs.close(info.fd, (err) => {
-          if (err) { throw(err); }
-          open(info.path, { app: getApp() });
-        })
+          // take file when done, open in chrome
+          fs.close(info.fd, (err) => {
+            if (err) { throw(err); }
+            open(info.path, { app: getApp() });
+          });
+        });
       });
     }
   } catch (e) {

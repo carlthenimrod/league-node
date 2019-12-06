@@ -6,55 +6,38 @@ const {User} = require('../../models/user');
 
 router.post('/', async (req, res, next) => {
   const id = req.params.id;
-  const {
-    userId,
-    name,
-    roles
-  } = req.body;
-  let user;
+  const userId = req.body._id;
+  const roles = req.body.roles;
+
+  console.log(req.body);
 
   try {
-    if (!ObjectID.isValid(id)) {
+    if (!ObjectID.isValid(id) || !ObjectID.isValid(userId)) {
       const err = new Error('ID not found.');
       err.status = 404;
       throw err;
     }
 
-    // check if user exists already
-    if (userId) {
-      user = await User.findById(userId);
-      if (!user) {
-        const err = new Error('User not found.');
-        err.status = 404;
-        throw err;
-      }
-    } else { // create new
-      user = new User({ name });
+    const user = await User.findById(userId);
+    if (!user) {
+      const err = new Error('User not found.');
+      err.status = 404;
+      throw err;
     }
 
-    const team = await Team.findById(id).populate('roster.user');
+    const team = await Team.findById(id);
     if (!team) {
       const err = new Error('Team not found.');
       err.status = 404;
       throw err;
     }
 
-    // remove user if exists already
-    if (userId) { 
-      for (let i = 0; i < team.roster.length; i++) {5
-        const u = team.roster[i].user;
-
-        if (u._id.equals(ObjectID(user._id))) { 
-          team.roster.splice(i, 1); 
-        }
-      }
-    }
-
     user.teams.push(id);
     await user.save();
 
-    team.roster.push({user, roles});
+    team.roster.push({ user: userId, roles });
     await team.save();
+    await team.populate('roster.user leagues').execPopulate();
 
     res.send(team);
   } catch (e) {

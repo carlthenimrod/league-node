@@ -24,13 +24,12 @@ router.get('/:id', loggedIn, async (req, res, next) => {
       throw err;
     }
 
-    let team = await Team.findById(id)
+    const team = await Team.findById(id)
       .populate('roster.user')
       .populate('pending')
       .populate('leagues', 'name schedule teams divisions')
       .populate('feed.from', 'name email img');
       
-    team = Team.formatRoster(team);
     res.send(team);
   } catch (e) {
     next(e);

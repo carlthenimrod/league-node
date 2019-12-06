@@ -64,6 +64,7 @@ const userSchema = new mongoose.Schema({
     phone: {type: String, trim: true},
     secondary: {type: String, trim: true}
   },
+  comments: {type: String, trim: true},
   notifications: {
     type: [{
       type: {type: String, required: true},

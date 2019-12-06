@@ -72,9 +72,9 @@ class SocketHandler {
         
         if (user._id.equals(this.userId)) {
           team.roster[i].status.online = (online) ? true : false;
-    
+
           // send updated user
-          this.io.to(team._id).emit('team', {
+          SocketHandler.io.to(team._id).emit('team', {
             event: 'roster',
             data: {
               action: 'update',
@@ -111,7 +111,7 @@ class SocketHandler {
       this.socket.join(teamId);
 
       // emit roster to team
-      this.io.to(teamId).emit('team', {
+      SocketHandler.io.to(teamId).emit('team', {
         event: 'roster',
         data: {
           action: 'update',
@@ -197,7 +197,7 @@ class SocketHandler {
       if (!match) { continue; }
   
       match.sockets.forEach(socketId => 
-        this.io.to(socketId).emit('league', { 
+        SocketHandler.io.to(socketId).emit('league', { 
           action, 
           league: {_id, name, status} 
         })
