@@ -36,7 +36,7 @@ router.get('/:id', loggedIn, async (req, res, next) => {
   }
 });
 
-router.post('/', isAdmin, async (req, res, next) => {
+router.post('/', async (req, res, next) => {
   let league,
       division;
 
@@ -44,6 +44,7 @@ router.post('/', isAdmin, async (req, res, next) => {
     leagueId, 
     divisionId,
     name,
+    roster,
     status
   } = req.body;
 
@@ -69,7 +70,7 @@ router.post('/', isAdmin, async (req, res, next) => {
 
   try {
     // create save team
-    const team = new Team({name, status});
+    const team = new Team({name, status, roster});
     await team.save();
 
     // if league, save

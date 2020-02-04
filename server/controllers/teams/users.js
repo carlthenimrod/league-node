@@ -9,8 +9,6 @@ router.post('/', async (req, res, next) => {
   const userId = req.body._id;
   const roles = req.body.roles;
 
-  console.log(req.body);
-
   try {
     if (!ObjectID.isValid(id) || !ObjectID.isValid(userId)) {
       const err = new Error('ID not found.');
