@@ -55,7 +55,7 @@ const send = async (template, options, data = {}) => {
           // take file when done, open in chrome
           fs.close(info.fd, (err) => {
             if (err) { throw(err); }
-            open(info.path, { app: getApp() });
+            // open(info.path, { app: getApp() });
           });
         });
       });

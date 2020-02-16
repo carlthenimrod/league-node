@@ -3,10 +3,13 @@ const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const EventEmitter = require('events');
 
 const config = require('../config/config');
 const mailer = require('../config/email');
-const {Notice} = require('./notice');
+const Notification = require('./notification');
+
+const userEvent = new EventEmitter();
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -66,17 +69,7 @@ const userSchema = new mongoose.Schema({
   },
   comments: {type: String, trim: true},
   notifications: {
-    type: [{
-      type: {type: String, required: true},
-      action: {type: String, required: true},
-      user: {ref: 'User', type: mongoose.Schema.Types.ObjectId},
-      team: {ref: 'Team', type: mongoose.Schema.Types.ObjectId},
-      status: {
-        read: {type: Boolean, default: false},
-        pending: {type: Boolean},
-        accepted: {type: Boolean}
-      }
-    }],
+    type: [Notification.schema],
     select: false
   }
 }, { 
@@ -167,20 +160,19 @@ const checkVerification = function (next) {
   next();
 }
 
-const handleNotices = async function() {
-  if (this.isNew) {
-    await Notice.create({
-      notice: 'new',
-      item: this._id,
-      itemType: 'User'
-    });
-  }
-};
-
 userSchema.pre('save', hashPassword);
 userSchema.pre('save', createConfirmationToken);
 userSchema.pre('save', checkVerification);
-userSchema.pre('save', handleNotices);
+
+userSchema.pre('save', function() {
+  if (!this.isNew) { return; }
+
+  userEvent.emit('new', this);
+});
+
+userSchema.statics.admins = function(projection = null) {
+  return this.find({ 'status.admin': true }, projection);
+};
 
 userSchema.statics.findByCredentials = async function (email, password) {
   const user = await this
@@ -338,4 +330,4 @@ userSchema.methods.recoverPassword = async function() {
 
 const User = mongoose.model('User', userSchema);
 
-module.exports = {User};
+module.exports = {User, userEvent};

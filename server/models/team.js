@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
+const EventEmitter = require('events');
 
-const {Notice} = require('./notice');
+const teamEvent = new EventEmitter();
 
 const rosterSchema = new mongoose.Schema({
   user: { 
@@ -43,24 +44,12 @@ const teamSchema = new mongoose.Schema({
   leagues: [{ type: mongoose.Schema.Types.ObjectId, ref: 'League' }]
 });
 
-const handleNotices = async function () {
-  if (this.isNew && this.status.new) {
-    await Notice.create({
-      notice: 'new',
-      item: this._id,
-      itemType: 'Team'
-    });
-  }
+teamSchema.pre('save', function() {
+  if (!this.isNew) { return; }
 
-  if (!this.isNew && this.isModified('status')) {
-    if (this._status === 'new' && this.status !== this._status) {
-      await Notice.findOneAndRemove({ item: this._id, notice: 'new' });
-    }
-  }
-};
-
-teamSchema.pre('save', handleNotices);
+  teamEvent.emit('new', this);
+});
 
 const Team = mongoose.model('Team', teamSchema);
 
-module.exports = {Team};
+module.exports = {Team, teamEvent};

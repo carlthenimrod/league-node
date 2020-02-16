@@ -9,7 +9,6 @@ const leagueController = require('../controllers/leagues');
 const teamController = require('../controllers/teams');
 const userController = require('../controllers/users');
 const placeController = require('../controllers/places');
-const noticeController = require('../controllers/notices');
 
 // routes
 router.use('/auth', authController);
@@ -17,7 +16,6 @@ router.use('/leagues', leagueController);
 router.use('/teams', teamController);
 router.use('/users', userController);
 router.use('/places', isAdmin, placeController);
-router.use('/notices', isAdmin, noticeController);
 
 // 404
 router.use((req, res, next) => {
