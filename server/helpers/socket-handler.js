@@ -1,8 +1,5 @@
 const {ObjectID} = require('mongodb');
 
-const {User, userEvent} = require('../models/user');
-const {Team, teamEvent} = require('../models/team');
-const Notification = require('../models/notification');
 const userStore = require('../stores/user-store');
 const teamStore = require('../stores/team-store');
 
@@ -218,76 +215,6 @@ class SocketHandler {
       ); 
     }
   };
-
-  static notificationEvent = (type, action, notification, userIds) => {
-    const users = this.getOnlineUsers(userIds);
-
-    if (users.length === 0) { return; }
-
-    users.forEach(user => 
-      user.sockets.forEach(socketId => {
-        SocketHandler.io.to(socketId).emit('notification', { 
-          type,
-          action, 
-          notification 
-        })
-      })
-    );
-  };
 }
-
-userEvent.on('new', async user => {
-  const type = 'admin';
-  const action = 'newUser';
-
-  const notification = new Notification({
-    type,
-    action,
-    user
-  });
-
-  const admins = await User.admins('notifications');
-
-  for (let i = 0; i < admins.length; i++) {
-    const admin = admins[i];
-    admin.notifications.push(notification);
-
-    await admin.save();
-  }
-
-  SocketHandler.notificationEvent(
-    type, 
-    action, 
-    notification, 
-    admins.map(a => a._id)
-  );
-});
-
-teamEvent.on('new', async team => {
-  const type = 'admin';
-  const action = 'newTeam';
-
-  const notification = new Notification({
-    type,
-    action,
-    team
-  });
-
-  const admins = await User.admins('notifications');
-
-  for (let i = 0; i < admins.length; i++) {
-    const admin = admins[i];
-    admin.notifications.push(notification);
-
-    await admin.save();
-  }
-
-  SocketHandler.notificationEvent(
-    type, 
-    action, 
-    notification, 
-    admins.map(a => a._id)
-  );
-});
 
 module.exports = SocketHandler;

@@ -26,7 +26,7 @@ router.get('/:id', loggedIn, async (req, res, next) => {
 
     const team = await Team.findById(id)
       .populate('roster.user')
-      .populate('pending')
+      .populate('pending.user')
       .populate('leagues', 'name schedule teams divisions')
       .populate('feed.from', 'name email img');
       
@@ -45,6 +45,7 @@ router.post('/', async (req, res, next) => {
     divisionId,
     name,
     roster,
+    pending,
     status
   } = req.body;
 
@@ -70,7 +71,7 @@ router.post('/', async (req, res, next) => {
 
   try {
     // create save team
-    const team = new Team({name, status, roster});
+    const team = new Team({ name, status, roster, pending });
     await team.save();
 
     // if league, save
@@ -166,6 +167,24 @@ router.delete('/:id', isAdmin, async (req, res, next) => {
 
   try {
     await Team.findByIdAndDelete(id);
+    res.send();
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post('/name', async (req, res, next) => {
+  const name = req.body.name;
+  
+  try {
+    const team = await Team.findOne({ name });
+
+    if (team) {
+      const err = new Error('Team already exists!');
+      err.status = 409;
+      throw err;
+    }
+    
     res.send();
   } catch (e) {
     next(e);

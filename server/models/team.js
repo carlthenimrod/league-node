@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const EventEmitter = require('events');
 
+const {notificationEvent} = require('./notification');
+
 const teamEvent = new EventEmitter();
 
 const rosterSchema = new mongoose.Schema({
@@ -39,7 +41,7 @@ const teamSchema = new mongoose.Schema({
     }
   },
   roster: [rosterSchema],
-  pending: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  pending: [rosterSchema],
   feed: [feedSchema],
   leagues: [{ type: mongoose.Schema.Types.ObjectId, ref: 'League' }]
 });
@@ -50,6 +52,21 @@ teamSchema.pre('save', function() {
   teamEvent.emit('new', this);
 });
 
+teamSchema.statics.invite = async function(teamId, userId, accepted) {
+  const team = await this.findById(teamId, 'roster pending');
+  
+  const match = team.pending.find(p => p.user.toString() === userId);
+  if (!match) { return; }
+
+  team.pending = team.pending.filter(p => p.user.toString() === userId);
+
+  if (accepted) { team.roster.push(match); }
+
+  await team.save();
+}
+
 const Team = mongoose.model('Team', teamSchema);
+
+notificationEvent.on('teamInvite', Team.invite.bind(Team));
 
 module.exports = {Team, teamEvent};

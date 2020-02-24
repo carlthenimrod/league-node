@@ -7,7 +7,12 @@ const EventEmitter = require('events');
 
 const config = require('../config/config');
 const mailer = require('../config/email');
-const Notification = require('./notification');
+const {
+  Notification, 
+  AdminUserNotification,
+  AdminTeamNotification,
+  TeamInviteNotification
+} = require('./notification');
 
 const userEvent = new EventEmitter();
 
@@ -81,6 +86,12 @@ const userSchema = new mongoose.Schema({
     virtuals: true
   }
 });
+
+const notificationsArray = userSchema.path('notifications');
+
+notificationsArray.discriminator('AdminUserNotification', AdminUserNotification.schema);
+notificationsArray.discriminator('AdminTeamNotification', AdminTeamNotification.schema);
+notificationsArray.discriminator('TeamInviteNotification', TeamInviteNotification.schema);
 
 userSchema.virtual('fullName').get(function() {
   return getFullName(this.name);

@@ -23,6 +23,42 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+router.put('/:notificationId', async (req, res, next) => {
+  const {id, notificationId} = req.params;
+  const {status} = req.body;
+
+  try {
+    if (!ObjectID.isValid(id) || !ObjectID.isValid(notificationId)) {
+      const err = new Error('Invalid ID');
+      err.status = 400;
+      throw err;
+    }
+
+    const user = await User.findById(id, 'teams notifications');
+    if (!user) {
+      const err = new Error('User not found.');
+      err.status = 404;
+      throw err;
+    }
+
+    const index = user.notifications
+      .findIndex(n => n._id.toString() === notificationId);
+
+    const notification = user.notifications[index];
+    notification.status = { ...notification.status, ...status};
+
+    await user.save();
+
+    if (notification.team) {
+      await user.populate(`notifications.${index}.team`, 'name img').execPopulate();
+    }
+
+    res.send(notification);
+  } catch (e) {
+    next(e);
+  }
+});
+
 router.post('/read', async (req, res, next) => {
   const id = req.params.id;
 

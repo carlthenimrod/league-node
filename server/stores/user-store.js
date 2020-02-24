@@ -25,14 +25,20 @@ const remove = (user, socketId) => {
   if (match.sockets.length === 0) { users.splice(index, 1); }
 };
 
-const get = (userId) => {
-  if (!userId) { return users; }
+const get = value => {
+  if (!value) { return users; }
 
-  const match = users.find(u => u._id.equals(userId));
+  if (value.constructor === Array) {
+    const match = users.filter(u => 
+      value.includes(u._id.toString())
+    );
 
-  if (!match) { return false; }
-
-  return match;
+    return match;
+  } else {
+    const match = users.find(u => u._id.equals(value));
+    
+    return match ? match : false;
+  }
 }
 
 const update = (io, updatedUser) => {
